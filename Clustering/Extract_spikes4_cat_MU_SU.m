@@ -9,7 +9,7 @@ int_factor=handles.par.int_factor;
 %% entirely different loop here... only loop to concatinate data, outside we loop through channels (&blocks)
 dat=[];
 for b=1:numel(handles.current_blocks)
-    load([handles.main_folder 'WC_Block-' num2str(handles.current_blocks(b)) filesep 'datafilt_ch'  sprintf('%03d',handles.current_channel) '.mat'],'data');
+    load([handles.sortcodes_folder 'WC_Block-' num2str(handles.current_blocks(b)) filesep 'datafilt_ch'  sprintf('%03d',handles.current_channel) '.mat'],'data');
     dat=[dat data];
     clear data
 end
@@ -140,19 +140,17 @@ else
     else
         spikes(:,[1 2 end-1 end])=[];       %eliminates borders that were introduced for interpolation
     end
-    
-    %         chanceevent = numsamples * chancelevel/2;
-    
 end
 
 index=index/sr*1000;
 par=handles.par;
 cluster_class=[zeros(size(index)) index];
+fnamepart=[handles.WC_concatenation_folder 'dataspikes_ch' sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file) '_' handles.current_threshold_step];
 switch handles.threshold
     case 'pos'
-        save([handles.WC_concatenation_folder 'dataspikes_ch' sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file) '_' handles.current_threshold_step '_pos'],'spikes','index','thr','par','cluster_class')
+        save([fnamepart '_pos'],'spikes','index','thr','par','cluster_class')
     case 'neg'
-        save([handles.WC_concatenation_folder 'dataspikes_ch' sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file) '_' handles.current_threshold_step '_neg'],'spikes','index','thr','par','cluster_class')
+        save([fnamepart '_neg'],'spikes','index','thr','par','cluster_class')
     case 'both'
         %spikesign = sign(spikes(:,w_pre*int_factor));
         spikesall = spikes;
@@ -161,11 +159,11 @@ switch handles.threshold
         spikes = spikesall(spikesign == -1,:);
         cluster_class = cluster_class_all(spikesign == -1,:);
         index = indexall(spikesign == -1);
-        save([handles.WC_concatenation_folder 'dataspikes_ch' sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file) '_' handles.current_threshold_step '_neg'],'spikes','index','thr','par','cluster_class')
+        save([fnamepart '_neg'],'spikes','index','thr','par','cluster_class')
         spikes = spikesall(spikesign == 1,:);
         cluster_class = cluster_class_all(spikesign == 1,:);
         index = indexall(spikesign == 1);
-        save([handles.WC_concatenation_folder 'dataspikes_ch' sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file) '_' handles.current_threshold_step '_pos'],'spikes','index','thr','par','cluster_class')
+        save([fnamepart '_pos'],'spikes','index','thr','par','cluster_class')
 end
 
 clearvars -except handles sr ref w_pre w_post int_factor files k chancelevel

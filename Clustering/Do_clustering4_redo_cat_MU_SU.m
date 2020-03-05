@@ -74,6 +74,7 @@ for k =  1 : numel(thresholds)
     
     fprintf('%d spikes detected\n',nspk);
     
+    handles.fname = [handles.WC_concatenation_folder 'data_' channelfile '_' thresholds{k}];   %filename for interaction with SPC
     handles.fname = ['data_' channelfile '_' thresholds{k}];   %filename for interaction with SPC
     
     min_clus = max(handles.par.min_clus_abs,handles.par.min_clus_rel*nspk);
