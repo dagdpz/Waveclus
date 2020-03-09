@@ -37,22 +37,26 @@ end
 colind = [colind ones(size(colind,1),1) * 0.1];
 
 figure(handles.hfeatures);
+colormap(handles.colors);
 nf=length(handles.feature_names);
 VER=version('-release');
 VER=str2double(VER(1:4));
 kk=1;
-for i=1:nf
+for i=1%:nf
     for j=i+1:nf
         cax=handles.hfaxes(kk);
         cla(cax);hold(cax,'on');
-        hLine = scatter(cax,handles.features(featureind,i),handles.features(featureind,j),30,colind(:,1:3),'.');
         %         hLine = plot(cax,handles.features(featureind,i),handles.features(featureind,j),'.','markersize',5);
         if VER>=2014 %since this part only works for matlab 2014 +
+            hLine = scatter(cax,handles.features(featureind,i),handles.features(featureind,j),30,colind(:,1:3),'.');
             hLine.MarkerHandle.get;
             drawnow
             hLine.MarkerHandle.EdgeColorBinding = 'discrete';
             hLine.MarkerHandle.EdgeColorData = uint8(255*colind)';
         else
+            [~, colix]=ismember(colind(:,1:3),flipud(handles.colors),'rows');
+            colix=size(handles.colors,1)+1-colix;
+            hLine = scatter(cax,handles.features(featureind,i),handles.features(featureind,j),30,colix,'.');
             drawnow
         end
         %         set(hLine.MarkerHandle,'EdgeColorBinding','discrete','EdgeColorData',uint8(255*colind)')

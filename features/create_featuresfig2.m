@@ -24,14 +24,14 @@ else
 end
 
 nf=handles.nfeatures;
-np=nf*(nf-1)/2;
+np=nf;%*(nf-1)/2;
 nrow=floor(sqrt(np));
 ncol=ceil(sqrt(np));
 
 stepx=0.01; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.01; hight=(1-(nrow+1)*stepy)/nrow;
 k=1;
-for i=1:nf,
+for i=1 %:nf,
     for j=i+1:nf,
         mnx=min(min(handles.features(:,i)));
         mny=min(min(handles.features(:,j)));
