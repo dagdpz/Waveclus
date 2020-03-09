@@ -14,7 +14,7 @@ handles.classify_space='spikeshapesfeatures';
 % handles.classify_method= 'diaglinear'; 
 handles.classify_method= 'linear';
 
-clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5];
+clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5;0 0 0];
 set(0,'DefaultAxesColorOrder',clus_colors);
 % handles.colors='brgcmybrgcmybrgcmybrgcmy';
 handles.colors= clus_colors;
@@ -115,7 +115,7 @@ clear q;
 % t=cputime-t; fprintf('end assiging classind \t\t%1.0f\n',t); t=cputime;
 load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
 us_idx=strfind(filename,'_');
-n_file=str2double(filename(us_idx(end-1)+1:us_idx(end)-1));
+n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
 block=whattofindwhere{handles.channel}{n_file}(1);
 us_idx=strfind(pathname,filesep);
 tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];

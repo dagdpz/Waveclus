@@ -9,7 +9,7 @@ int_factor=handles.par.int_factor;
 %% entirely different loop here... only loop to concatinate data, outside we loop through channels (&blocks)
 dat=[];
 for b=1:numel(handles.current_blocks)
-    load([handles.main_folder 'WC_Block-' num2str(handles.current_blocks(b)) filesep 'datafilt_ch'  sprintf('%03d',handles.current_channel) '.mat'],'data');
+    load([ handles.WC_concatenation_folder(1:end-3) 'WC_Block-' num2str(handles.current_blocks(b)) filesep 'datafilt_ch'  sprintf('%03d',handles.current_channel) '.mat'],'data');
     dat=[dat data];
     clear data
 end
