@@ -1,4 +1,4 @@
-function Extract_spikes4_cat_MU_SU(handles)
+function wc_extract_spikes_cat_MU_SU(handles)
 
 sr=handles.WC.sr;
 w_pre=handles.WC.w_pre;

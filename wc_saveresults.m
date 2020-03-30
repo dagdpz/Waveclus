@@ -1,5 +1,5 @@
 function handles=wc_saveresults(handles)
-par=handles.par;
+par=handles.WC;
 par.temp=handles.temp;
 par.min_clus=handles.min_clus;
 

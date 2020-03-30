@@ -1,6 +1,4 @@
 function waveclus
-
-% set(groot,'DefaultFigureGraphicsSmoothing','off')
 %this version does not use setappdata ot getappdtata, all data is
 %transfered through handles
 %create parameters, make sure that they do not overlap with existing ones
@@ -8,15 +6,10 @@ function waveclus
 handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
 handles.MINISI=[0.01:0.01:0.09 0.1:0.1:3 4:64 100:100:1000];
 handles.MAX_CLUS=23;
-% handles.classify_space='features';
-% handles.classify_space='spikeshapes';
 handles.classify_space='spikeshapesfeatures';
-% handles.classify_method= 'diaglinear'; 
 handles.classify_method= 'linear';
-
 clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5;0 0 0];
 set(0,'DefaultAxesColorOrder',clus_colors);
-% handles.colors='brgcmybrgcmybrgcmybrgcmy';
 handles.colors= clus_colors;
 
 %order is important
@@ -26,7 +19,7 @@ handles=create_supplfig2(handles);
 handles.spikeaxes=[handles.spikeaxes handles.axesClust0];
 handles.isiaxes=[handles.isiaxes handles.axesISI0];
 
-handles=create_detailsfigure(handles);
+handles=wc_create_detailsfigure(handles);
 
 figure(handles.mainfig);
 % Update handles structure
@@ -35,7 +28,7 @@ guidata(handles.mainfig, handles);
 function loadbutton_Callback(source, eventdata)
 handles=guidata(get(source,'UserData'));
 
-handles=clean4new(handles);
+handles=wc_clean_handles(handles);
 
 % Update handles structure
 guidata(handles.mainfig, handles);
@@ -72,8 +65,8 @@ q=load(sprintf('%s.mat',handles.filename));
 % q.features=11;
 % q.par.min_clus
 
-handles.par=q.par; 
-handles.par.thr = q.thr;
+handles.WC=q.par; 
+handles.WC.thr = q.thr;
 handles.index=q.cluster_class(:,2);
 handles.nspk=length(handles.index);
 handles.ncl=max(q.cluster_class(:,1));
@@ -95,9 +88,9 @@ else
     clear qq;
 end   
 
-% handles.sp_time=(-handles.par.w_pre+1:1:handles.par.w_post)/handles.par.sr*1000;%time scale for spike shapes in ms
+% handles.sp_time=(-handles.WC.w_pre+1:1:handles.WC.w_post)/handles.WC.sr*1000;%time scale for spike shapes in ms
 %-----------------------------
-handles.sp_time=-handles.par.w_pre*handles.par.int_factor+1:1:handles.par.w_post*handles.par.int_factor;
+handles.sp_time=-handles.WC.w_pre*handles.WC.int_factor+1:1:handles.WC.w_post*handles.WC.int_factor;
 %----------------------------------
 handles.classtemp=q.classtemp;
 handles.tree=q.tree;
@@ -125,21 +118,21 @@ if ~exist(tens_fname,'file'),
     handles.ts_time=[0 1];
 else 
     q=load(tens_fname); 
-    handles.ts=double(q.data(1:round(10*handles.par.sr)))*handles.par.transform_factor;
-    handles.ts_time=(1:length(handles.ts))/handles.par.sr; 
+    handles.ts=double(q.data(1:round(10*handles.WC.sr)))*handles.WC.transform_factor;
+    handles.ts_time=(1:length(handles.ts))/handles.WC.sr; 
     %thesholds from spikes file?
     clear q; 
     set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
     % t=cputime-t; fprintf('end loading ts \t\t%1.0f\n',t); t=cputime;
     
     %plotting
-    plot_ts(handles);
+    wc_plot_raw(handles);
 end
 
 % t=cputime-t; fprintf('end plotting ts \t\t%1.0f\n',t); t=cputime;
-handles=plot_temperature(handles);
+handles=wc_plot_temperature(handles);
 % t=cputime-t; fprintf('end plotting temperatures \t\t%1.0f\n',t); t=cputime;
-handles=plot_spikes_isi(handles);
+handles=wc_plot_spikes_and_ISI(handles);
 % t=cputime-t; fprintf('end plotting spikes fig \t\t%1.0f\n',t); t=cputime;
 
 set(handles.textStatus,'string',sprintf('%s',handles.filename));
@@ -162,7 +155,7 @@ i=str2double(tag(8:end));
 handles=guidata(get(source,'UserData'));
 handles.details_currcluster=i;
 
-handles=plot_details(handles);
+handles=wc_plot_details(handles);
 
 % Update handles structure
 guidata(handles.mainfig, handles);
@@ -193,8 +186,8 @@ else
     set(handles.hclassify,'String','Classify');
 end
 
-handles=plot_spikes_isi(handles);
-if ~all(handles.ts==0), plot_ts(handles); end
+handles=wc_plot_spikes_and_ISI(handles);
+if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
@@ -203,7 +196,7 @@ function tempmatchbutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
 if get(handles.htempmatch,'value') == 1,
-    handles=tempmatch(handles);
+    handles=wc_match_template(handles);
     for i=find(handles.forced),
         set(handles.hfix(i),'Value',0);
         handles.fixed(i)=0;
@@ -219,12 +212,10 @@ if get(handles.htempmatch,'value') == 1,
 %     set(handles.htempmatch,'String','Classify');
 end
         
-handles=plot_spikes_isi(handles);
-if ~all(handles.ts==0), plot_ts(handles); end
+handles=wc_plot_spikes_and_ISI(handles);
+if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
-
-
 
 function changetempbutton_Callback(source, ~)
 % ti=cputime; fprintf('Start change temperature \t\t%1.0f\n',ti); ti=cputime;
@@ -235,7 +226,7 @@ handles=guidata(get(source,'UserData'));
 
 temp = round(temp);
 if temp < 1; temp=1;end                 %temp should be within the limits
-if temp > handles.par.num_temp; temp=handles.par.num_temp; end
+if temp > handles.WC.num_temp; temp=handles.WC.num_temp; end
 min_clus = round(min_clus);
 set(handles.hhor,'ydata',[min_clus min_clus]);
 set(handles.hver,'xdata',[temp temp]);
@@ -307,8 +298,8 @@ end
 %cluster zero
 handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
 % ti=cputime-ti; fprintf('end assinging clusters \t\t%1.0f\n',ti); ti=cputime;
-handles=plot_spikes_isi(handles);
-if ~all(handles.ts==0), plot_ts(handles); end
+handles=wc_plot_spikes_and_ISI(handles);
+if ~all(handles.ts==0), wc_plot_raw(handles); end
 % ti=cputime-ti; fprintf('end plotting spikes \t\t%1.0f\n',ti); ti=cputime;
 % Update handles structure
 guidata(handles.mainfig, handles);
@@ -341,9 +332,9 @@ handles.classind={handles.classind{setdiff(1:length(handles.classind),i)}};
 
 handles.ncl=handles.ncl-1;
 handles.rejected=i;
-handles=plot_spikes_isi(handles);
+handles=wc_plot_spikes_and_ISI(handles);
 handles.rejected=1;
-if ~all(handles.ts==0), plot_ts(handles); end
+if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
@@ -361,18 +352,16 @@ guidata(handles.mainfig, handles);
 
 function plotfeaturesbutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
-handles=plot_features2(handles);
+handles=wc_plot_features_vs_features(handles);
 
 function plottimecoursebutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
-%handles=plot_features2(handles);
-handles=plot_timecourse(handles);
-% set(handles.mainfig,'Visible','off')
+handles=wc_plot_features_vs_time(handles);
 
 function toplot_Callback(source,~)
 handles=guidata(get(source,'UserData'));
 %if data already loaded
-if isfield(handles,'spikes'), handles=plot_spikes_isi(handles); end
+if isfield(handles,'spikes'), handles=wc_plot_spikes_and_ISI(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
