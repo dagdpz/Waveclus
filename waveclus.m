@@ -1,4 +1,4 @@
-function wave_clus3new3
+function waveclus
 
 % set(groot,'DefaultFigureGraphicsSmoothing','off')
 %this version does not use setappdata ot getappdtata, all data is
@@ -176,7 +176,7 @@ handles=guidata(get(source,'UserData'));
 % if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
 
 if get(handles.hclassify,'value') == 1,
-    handles=classifyrest3(handles);
+    handles=wc_classifyrest(handles);
     %remove fix from forced clusters
     for i=find(handles.forced),
         set(handles.hfix(i),'Value',0);
@@ -383,7 +383,7 @@ loadbutton_Callback(source, eventdata)
 function savebutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
 set(handles.textStatus,'string',sprintf('Saving %s',handles.filename));
-handles=saveresults2(handles);
+handles=wc_saveresults(handles);
 figure(handles.mainfig);
 set(handles.textStatus,'string',sprintf('Saved %s',handles.filename));
 

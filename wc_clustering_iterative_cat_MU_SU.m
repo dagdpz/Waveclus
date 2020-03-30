@@ -1,51 +1,17 @@
-function Do_clustering4_redo_cat_MU_SU(handles)
+function wc_clustering_iterative_cat_MU_SU(handles)
 handles.bname='Ch';
 ifplot=1;
-print2file =1;                              %for saving printouts.
-%print2file =0;                              %for printing printouts.
+print2file =1;                              %for saving printouts. ??
 
 if ispc, handles.system = 'windows'; elseif ismac, handles.system = 'MACI64'; else if isunix, handles.system = 'linux'; else error('TestClust:UnknownSystem','Unknown system');
     end
 end
-
-handles.par.features = 'wavpcarawderiv';    %choice of spike features: wav: wavelet decomposition; pca: principle component analyses; raw: raw waveforms; deriv: first derivative of the raw waveforms
-handles.par.features = 'wavpcaraw';
-handles.par.wavelet='haar';                 %choice of wavelet family for wavelet features
-handles.par.exclusioncrit = 'thr';          % thr; number
-handles.par.exclusionthr = 0.8;               %def R^2 = 0.80
-handles.par.maxinputs = 11;   %15 %17, 15              %number of inputs to the clustering def. 11
-handles.par.scales = 4;                     %scales for wavelet decomposition
-
-% handles.bname='datahighpassch';
-
-%SPC parameters
-handles.par.num_temp = 18;                  %number of temperatures; def 25
-handles.par.mintemp = 0;                    %minimum temperature
-handles.par.maxtemp = 0.18;                 %maximum temperature def 0.25
-handles.par.tempstep = 0.01;                %temperature step
-% handles.stab = 0.8;                       %stability condition for selecting the temperature
-handles.par.SWCycles = 100;  % def. 1000     %number of montecarlo iterations
-handles.par.KNearNeighb = 11;               %number of nearest neighbors
-
-handles.par.temp_plot = 'log';              % temperature plot in log scale
-
-handles.par.max_spikes2plot = 1000;         %maximum number of spikes to plot.
-
-handles.par.min_clus_abs = 10;
-handles.par.min_clus_rel = 0.005;          %Default: 0.005% alternative: 0.0035
-handles.par.max_nrclasses = 8;
-handles.par.max_nrclasses2plot = 8;
-
-handles.par.chunk=5;                        %length of pieces into which file has to be splitted
-%handles.par.max_spikes2cluster = 40000;       %maximum number of spikes to cluster, if more take only this amount of randomly chosen spikes, others are set into cluster 0
-handles.par.max_spikes2cluster = 40000;       %maximum number of spikes to cluster, if more take only this amount of randomly chosen spikes, others are set into cluster 0
-
-sr = handles.par.sr;
+sr = handles.WC.sr;
 
 clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5];
 set(0,'DefaultAxesColorOrder',clus_colors)
 
-switch handles.threshold
+switch handles.WC.threshold
     case 'pos'
         thresholds={[handles.current_threshold_step '_pos']};
     case 'neg'
@@ -77,26 +43,26 @@ for k =  1 : numel(thresholds)
     handles.fname = [handles.WC_concatenation_folder 'data_' channelfile '_' thresholds{k}];   %filename for interaction with SPC
     handles.fname = ['data_' channelfile '_' thresholds{k}];   %filename for interaction with SPC
     
-    min_clus = max(handles.par.min_clus_abs,handles.par.min_clus_rel*nspk);
-    handles.par.min_clus = min_clus;
+    min_clus = max(handles.WC.min_clus_abs,handles.WC.min_clus_rel*nspk);
+    handles.WC.min_clus = min_clus;
     
     fprintf('Feature detection...\n');
     %CALCULATES INPUTS TO THE CLUSTERING ALGORITHM
-    [features,feature_names,inputs] = wave_features5B(spikes,handles);
-    handles.par.inputs = inputs;
+    [features,feature_names,inputs] = wc_feature_selection(spikes,handles);
+    handles.WC.inputs = inputs;
     save([handles.WC_concatenation_folder filename],'features','feature_names','-append');
     
     redo = 1;
     
     if ~isempty(features)
         
-        while redo
+        while redo && redoCount(k)<100
             try
                 %INTERACTION WITH SPC
                 fprintf('SPC...\n');
-                if nspk>handles.par.max_spikes2cluster, %take random handles.par.max_spikes2cluster spikes
+                if nspk>handles.WC.max_spikes2cluster, %take random handles.WC.max_spikes2cluster spikes
                     t=randperm(nspk);
-                    inds_to_cluster=t(1:handles.par.max_spikes2cluster);
+                    inds_to_cluster=t(1:handles.WC.max_spikes2cluster);
                     features1=features(inds_to_cluster,:);
                 else
                     features1=features;
@@ -105,32 +71,30 @@ for k =  1 : numel(thresholds)
                 
                 save(handles.fname,'features1','-ascii');
                 
-                [clu, tree] = run_cluster(handles);
+                [clu, tree] = wc_run_cluster(handles);
                 
                 redo = 0;
-            catch
+            catch err
                 disp('Again')
                 redo = 1;
                 redoCount(k) = redoCount(k) + 1;
             end
         end
         
-        classtemp=cell(size(clu,1),handles.par.max_nrclasses);
+        classtemp=cell(size(clu,1),handles.WC.max_nrclasses);
         for te=1:size(clu,1),
-            %       for j=1:handles.par.max_nrclasses, classtemp{te,j}=inds_to_cluster(find(clu(te,3:end)==j-1)); end;
-            for j=1:handles.par.max_nrclasses, classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1)); end;
+            %       for j=1:handles.WC.max_nrclasses, classtemp{te,j}=inds_to_cluster(find(clu(te,3:end)==j-1)); end;
+            for j=1:handles.WC.max_nrclasses, classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1)); end;
         end
         fprintf('Adding SPC output information into results file...\n');
-        %    save(output_filename,'tree','classtemp','-append');
-        %    save(output_filename,'spikes','-append');
         save([handles.WC_concatenation_folder filename],'tree','classtemp','-append');
         
-        [temp] = find_temp_new(tree,handles);
-        handles.par.temp=temp;
+        [temp] = wc_find_temperature(tree,handles); %% here i would like to add a mechanism to loop through temperatures...
+        handles.WC.temp=temp;
         
         %DEFINE CLUSTERS for spesific temperature using min_clus variable
-        classind=cell(1,handles.par.max_nrclasses);
-        for i=1:handles.par.max_nrclasses,
+        classind=cell(1,handles.WC.max_nrclasses);
+        for i=1:handles.WC.max_nrclasses,
             t=classtemp{temp,i};
             classind{i}=[];
             if length(t)>min_clus, classind{i}=t; end
@@ -138,18 +102,16 @@ for k =  1 : numel(thresholds)
         %zero cluster, alo includes all unclustered spikes
         classind{end+1}=setdiff(1:nspk, [classind{:}]);
         
-        %% Forcing as default
+        %% classify rest as default
         handles.spikes=spikes;
         handles.classind=classind;
         handles.features=features;
         handles.feature_names=feature_names;
         handles.ncl=max(length(classind)-1);
         handles.nspk=nspk;
-        handles.classify_space='spikeshapesfeatures';
-        handles.classify_method= 'linear';
         clear features feature_names
         
-        handles=classifyrest3(handles);
+        handles=wc_classifyrest(handles);
         classind=handles.classind;
         %% Forcing as default
         
@@ -160,11 +122,11 @@ for k =  1 : numel(thresholds)
         for i=1:length(classind)-1, %minus cluster zero
             cluster_class(classind{i},1)=i;
         end
-        par=handles.par;
-        %    save(output_filename,'cluster_class','par','-append');
+        par=handles.WC; %% saving as 'par'
         save([handles.WC_concatenation_folder filename],'cluster_class','par','-append','-v6');
         
         
+        %% PLOTTING
         
         if ifplot,
             
@@ -172,9 +134,7 @@ for k =  1 : numel(thresholds)
             handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
             handles.index=index;
             handles.nfeatures=size(handles.features,2);
-            clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 0];
             set(0,'DefaultAxesColorOrder',clus_colors);
-            % handles.colors='brgcmybrgcmybrgcmybrgcmy';
             handles.colors= clus_colors;
             handles.mainfig=[];
             handles=plot_timecourse(handles);
@@ -186,9 +146,7 @@ for k =  1 : numel(thresholds)
             handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
             handles.index=index;
             handles.nfeatures=size(handles.features,2);
-            clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 0];
             set(0,'DefaultAxesColorOrder',clus_colors);
-            % handles.colors='brgcmybrgcmybrgcmybrgcmy';
             handles.colors= clus_colors;
             handles.mainfig=[];
             handles=plot_features2(handles);
@@ -196,10 +154,9 @@ for k =  1 : numel(thresholds)
             close (handles.hfeatures)
             
             %% plotting WC main figure
-            time=[-handles.par.w_pre+1/handles.par.int_factor:1/handles.par.int_factor:handles.par.w_post]/sr*1000;%timie in ms
+            time=[-handles.WC.w_pre+1/handles.WC.int_factor:1/handles.WC.int_factor:handles.WC.w_post]/sr*1000;%timie in ms
             current_figure_handle=figure;
             set(0, 'currentfigure', current_figure_handle);
-            %set(gcf,'PaperOrientation','Landscape','PaperUnits','normalized','PaperPosition',[0.01 0.01 0.98 0.98])
             set(gcf,'PaperUnits','normalized','PaperPosition',[0.01 0.01 0.98 0.98])
             clf
             ncol=5;
@@ -211,11 +168,11 @@ for k =  1 : numel(thresholds)
             
             %temperature plot
             subplot(nrow,ncol,temp_plot);
-            semilogy(1:handles.par.num_temp,tree(1:handles.par.num_temp,5:end));
+            semilogy(1:handles.WC.num_temp,tree(1:handles.WC.num_temp,5:end));
             line([temp temp],[1 max(max(tree(:,5:end)))*1.1],'linestyle',':','color','k');
-            line([1 handles.par.num_temp],[min_clus min_clus],'linestyle',':','color','k');
+            line([1 handles.WC.num_temp],[min_clus min_clus],'linestyle',':','color','k');
             ylim([1 max(max(tree(:,5:end)))*1.1])
-            xlim([0.5 handles.par.num_temp+0.5]);
+            xlim([0.5 handles.WC.num_temp+0.5]);
             
             %all spikes superimposed
             if length(classind)>1,
@@ -228,7 +185,7 @@ for k =  1 : numel(thresholds)
             
             subplot(nrow,ncol,1);cla; hold on;
             if sum(cluster_class(:,1)==0), plot(time, spikes(cluster_class(:,1)==0,:),'color','k'); end
-            for i=1:min(length(classind)-1, handles.par.max_nrclasses2plot),
+            for i=1:min(length(classind)-1, handles.WC.max_nrclasses2plot),
                 if ~isempty(classind{i}), plot(time, spikes(classind{i},:),'color',clus_colors(i,1:3)); end
             end
             xlim([min(time) max(time)]);
@@ -236,7 +193,7 @@ for k =  1 : numel(thresholds)
             title(sprintf('%s-%s',handles.bname,channelfile),'Fontsize',12,'interpreter','none')
             
             %individual clusters
-            for i=1:min(sum(~cellfun(@isempty,classind(1:end-1))), handles.par.max_nrclasses2plot),%minus cluster 0
+            for i=1:min(sum(~cellfun(@isempty,classind(1:end-1))), handles.WC.max_nrclasses2plot),%minus cluster 0
                 subplot(nrow,ncol,sp_plot(i));hold on
                 sp=spikes(classind{i},:);
                 plot(time, sp,'color',clus_colors(i,1:3));
@@ -286,7 +243,6 @@ for k =  1 : numel(thresholds)
                 title(sprintf('%d in <2ms',sum(N(1:2))));
                 xlabel('ISI(ms)');
             end
-            toc
             if print2file==0;
                 print
             else
@@ -303,7 +259,8 @@ for k =  1 : numel(thresholds)
         clear classind cluster_class
         %    memory
     end
-    
+        
+    disp([' clustering ' handles.WC_concatenation_folder filename ' took ' num2str(round(toc)) ' seconds']);        
 end
 clear handles
 %figure;hist(redoCount,0:1:max(redoCount))

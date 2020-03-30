@@ -1,10 +1,11 @@
 function Extract_spikes4_cat_MU_SU(handles)
 
-sr=handles.par.sr;
-w_pre=handles.par.w_pre;
-w_post=handles.par.w_post;
-ref=handles.par.ref;
-int_factor=handles.par.int_factor;
+sr=handles.WC.sr;
+w_pre=handles.WC.w_pre;
+w_post=handles.WC.w_post;
+ref=handles.WC.ref;
+int_factor=handles.WC.int_factor;
+remove_ini=handles.WC.remove_ini;
 
 %% entirely different loop here... only loop to concatinate data, outside we loop through channels (&blocks)
 dat=[];
@@ -23,8 +24,8 @@ tic
 %         dat=single(dat);
 %     end
 
-if ~(handles.par.transform_factor == 1)
-    dat = dat * handles.par.transform_factor;                       %%in microvolts
+if ~(handles.WC.transform_factor == 1)
+    dat = dat * handles.WC.transform_factor;                       %%in microvolts
 end
 
 if size(dat,2) == 1
@@ -33,20 +34,20 @@ end
 
 %numsamples = length(dat);
 
-thr = handles.par.stdmin*median(abs(dat))/0.6745;
-thrmax = handles.par.stdmax*median(abs(dat))/0.6745;
+thr = handles.WC.stdmin*median(abs(dat))/0.6745;
+thrmax = handles.WC.stdmax*median(abs(dat))/0.6745;
 
 % LOCATE SPIKE TIMES
-switch handles.threshold
+switch handles.WC.threshold
     case 'pos', ups = find(dat(w_pre+2:end-w_post-2) > thr) +w_pre+1;%indices of values above threshold
     case 'neg', ups = find(dat(w_pre+2:end-w_post-2) < -thr) +w_pre+1;%indices of values below threshold
     case 'both', ups = find(abs(dat(w_pre+2:end-w_post-2)) > thr) +w_pre+1;
 end
     %% this is the part to reduce to during the task only
-    if handles.remove_ini
+    if remove_ini
         is_during_task=false(size(ups));
         for t=1:size(handles.task_times,1)
-            is_during_task(ups>=handles.task_times(t,1)*handles.par.sr & ups<=handles.task_times(t,2)*handles.par.sr)=true;
+            is_during_task(ups>=handles.task_times(t,1)*handles.WC.sr & ups<=handles.task_times(t,2)*handles.WC.sr)=true;
         end
         ups=ups(is_during_task);
     end
@@ -115,13 +116,13 @@ else
     nspk=numel(index);
     
     %INTERPOLATION
-    if handles.par.interpolation=='y',
+    if handles.WC.interpolation=='y',
         %Does interpolation
         ints=1/int_factor:1/int_factor:np+4;
         intspikes = spline(1:np+4,spikes,ints);
         spikes1=zeros(nspk,np*int_factor);
         
-        switch handles.threshold
+        switch handles.WC.threshold
             case 'pos'
                 [~,iaux]=max(intspikes(:,(w_pre+1)*int_factor:(w_pre+3)*int_factor),[],2);
             case 'neg'
@@ -143,10 +144,10 @@ else
 end
 
 index=index/sr*1000;
-par=handles.par;
+par=handles.WC;
 cluster_class=[zeros(size(index)) index];
 fnamepart=[handles.WC_concatenation_folder 'dataspikes_ch' sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file) '_' handles.current_threshold_step];
-switch handles.threshold
+switch handles.WC.threshold
     case 'pos'
         save([fnamepart '_pos'],'spikes','index','thr','par','cluster_class')
     case 'neg'
@@ -167,6 +168,6 @@ switch handles.threshold
 end
 
 clearvars -except handles sr ref w_pre w_post int_factor files k chancelevel
-toc
+    disp([' Extracting spikes ' handles.WC_concatenation_folder(1:end-3) ' ch '  sprintf('%03d',handles.current_channel) ' took ' num2str(round(toc*10)/10) ' seconds']);       
 
 

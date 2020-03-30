@@ -1,9 +1,8 @@
-function handles=classifyrest3(handles);
+function handles=wc_classifyrest(handles)
 %add possibility to choose between spike shapes and features 
 
-handles.par.template_sdnum = 5;             % max radius of cluster in std devs.
 shift = 2;
-shift = shift*handles.par.int_factor;
+shift = shift*handles.WC.int_factor;
 
 classes=zeros(1,handles.nspk);
 for i=1:handles.ncl
@@ -12,17 +11,17 @@ end
 if ~sum(classes==0), return; end %nothing to do, maybe check for this earlier
 group=classes([classes~=0]);
 class0=find(classes==0);
-switch handles.classify_space,
+switch handles.WC.classify_space,
     case 'spikeshapes', 
-        ints=handles.par.w_pre*handles.par.int_factor-handles.par.w_pre*handles.par.int_factor/2+1:handles.par.w_pre*handles.par.int_factor+handles.par.w_post*handles.par.int_factor/2;
+        ints=handles.WC.w_pre*handles.WC.int_factor-handles.WC.w_pre*handles.WC.int_factor/2+1:handles.WC.w_pre*handles.WC.int_factor+handles.WC.w_post*handles.WC.int_factor/2;
         sample=handles.spikes(class0,ints);
         training=handles.spikes(classes~=0,ints);
     case 'features',
         sample=handles.features(class0,:);
         training=handles.features(classes~=0,:);
     case 'spikeshapesfeatures',
-        ints1 = sort(handles.par.w_pre*handles.par.int_factor: -handles.par.int_factor: handles.par.w_pre*handles.par.int_factor-handles.par.w_pre*handles.par.int_factor/2+1+shift);
-        ints2 = handles.par.w_pre*handles.par.int_factor + handles.par.int_factor : handles.par.int_factor: handles.par.w_pre*handles.par.int_factor+handles.par.w_post*handles.par.int_factor/2+shift;
+        ints1 = sort(handles.WC.w_pre*handles.WC.int_factor: -handles.WC.int_factor: handles.WC.w_pre*handles.WC.int_factor-handles.WC.w_pre*handles.WC.int_factor/2+1+shift);
+        ints2 =      handles.WC.w_pre*handles.WC.int_factor + handles.WC.int_factor : handles.WC.int_factor: handles.WC.w_pre*handles.WC.int_factor+handles.WC.w_post*handles.WC.int_factor/2+shift;
         ints = cat(2,ints1,ints2);
         clear ints1 ints2
 %         sample=cat(2,handles.spikes(class0,ints),handles.spikescomp(class0,:),handles.spikesadd(class0,:));
@@ -35,30 +34,30 @@ switch handles.classify_space,
     case 'selectedfeatures',
         
 end
-switch handles.classify_method,
+switch handles.WC.classify_method,
     case 'force',
         %rodrigo's methods
     otherwise
         
-        [centers, sd, pd] = build_templates(group,training); % we are going to ignore pd
-        sdnum = handles.par.template_sdnum;
+        [centers, sd] = wc_build_templates(group,training); 
+        sdnum = handles.WC.template_sdnum;
         
         index = false(length(class0),1);
-        for i = 1 : length(class0)
-            distances = sqrt(sum((ones(size(centers,1),1)*sample(i,:) - centers).^2,2)');
-            conforming = find(distances < sdnum*sd);
-            if isempty(conforming)
-                index(i) = 1;
+        for i = 1 : length(class0) % each spike
+            distances = sqrt(sum((ones(size(centers,1),1)*sample(i,:) - centers).^2,2)'); % check distance in all features
+            conforming = distances < sdnum*sd;
+            if sum(conforming)==0 % spike is off in all features
+                index(i) = 1;     % will be put in 0 cluster in the end
             end
             clear distances conforming
         end
         
         if handles.ncl>1,
-            while size(training,2)>size(training,1),%if number of features is bigger then number of spikes
+            while size(training,2)>size(training,1),%if number of features is bigger then number of spikes % when???
                 sample=sample(:,1:2:end);
                 training=training(:,1:2:end);
             end
-            [c,err] = classify(sample, training, group, handles.classify_method);
+            c = classify(sample, training, group, handles.WC.classify_method);
         else
             c=ones(1,size(sample,1));
         end

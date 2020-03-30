@@ -1,15 +1,15 @@
-function [inspk,feature_names,inputs] = wave_features5B(spikes,handles)
+function [inspk,feature_names,inputs] = wc_feature_selection(spikes,handles)
 %Calculates the spike features
 
-scales = handles.par.scales;
-feature = handles.par.features;
-exclusioncrit = handles.par.exclusioncrit; % thr; number 
-exclusionthr = handles.par.exclusionthr;
-maxinputs = handles.par.maxinputs;
-int_factor = handles.par.int_factor;
-w_pre = handles.par.w_pre;
-w_post = handles.par.w_post;
-% sr = handles.par.sr;
+scales = handles.WC.scales;
+feature = handles.WC.features;
+exclusioncrit = handles.WC.exclusioncrit; % thr; number 
+exclusionthr = handles.WC.exclusionthr;
+maxinputs = handles.WC.maxinputs;
+int_factor = handles.WC.int_factor;
+w_pre = handles.WC.w_pre;
+w_post = handles.WC.w_post;
+% sr = handles.WC.sr;
 
 nspk=size(spikes,1);
 len = size(spikes,2)/int_factor;
@@ -34,7 +34,7 @@ if strfind(feature,'wav')
     
     cc=zeros(nspk,length(ind1));
     for i=1:nspk                                
-        [c,l]=wavedec(spikes(i,ind1),scales,handles.par.wavelet);
+        [c,l]=wavedec(spikes(i,ind1),scales,handles.WC.wavelet);
         cc(i,:)=c; 
     end
     
@@ -132,7 +132,7 @@ thr_dist_max = meancc + stdcc;
 
 sd=nan(1,size(ccall,2));
 for i=1:size(ccall,2)                            % lilliefors test for coefficient selection
-    aux = ccall(ccall(:,i) > thr_dist_min(i) & ccall(:,i) < thr_dist_max(i),i);
+    aux = ccall(ccall(:,i) > thr_dist_min(i) & ccall(:,i) < thr_dist_max(i),i); % removing outliers (3x std)
     if length(aux) > 10;
         [~,~,lstat]=lillietest(aux);
         sd(i)=lstat;
@@ -141,9 +141,10 @@ for i=1:size(ccall,2)                            % lilliefors test for coefficie
     end
 end
 
-[sortsd,ind]=sort(-sd);
+[sortsd,ind]=sort(-sd); % orders indexes by lstat (KSstatistic) of lilliefors test, the higher ones first
 
-
+% excluding features if KStatistics below certain threshold (mean +
+% 1.96*std) of a bootstrapped random dummie 
 if strcmp(exclusioncrit,'thr')
     crit = nan(100,1);
     for i = 1 : 100
@@ -174,45 +175,49 @@ fnall = fnall(ind);
 
 clear ind
 
-
-simmat = corr(ccall).^2;
-simmat2 = simmat >= exclusionthr;
-simmat2(diag(true(1,size(simmat2,1)))) = 0;
-ind = 1 : size(simmat2,1);
-indrej = [];
-
-while sum(simmat2(:))
-    distdummy = sum(simmat2);
-    thrdummy = exclusionthr;
-    delind = find(distdummy == max(distdummy));
-    while length(delind) > 1
-        thrdummy = thrdummy+0.01;
-        simmat3 = simmat >= thrdummy;
-        simmat3(diag(true(1,size(simmat3,1)))) = 0;
-        distdummy = sum(simmat3);
-        delind = delind(distdummy(delind) == max(distdummy(delind)));
-        if ~sum(distdummy(delind))
-%             delind = randsample(delind,1);
-            delind = delind(end);
+%% removing correlated features! we should probably be more strict here -> lower exclusionthr
+if ~isempty(ccall)
+    feat_corr = corr(ccall).^2;                    % feature correlation matrix
+    feat_corr_true = feat_corr >= exclusionthr;           % logical matrix of correlated features
+    feat_corr_true(diag(true(1,size(feat_corr_true,1)))) = 0; % removing autocorrelation
+    ind = 1 : size(feat_corr_true,1);
+    indrej = [];
+    
+    %% removing features one by one, starting with the one that correlates with most
+    while sum(feat_corr_true(:))
+        distdummy = sum(feat_corr_true);
+        %thrdummy = exclusionthr;
+        delind = find(distdummy == max(distdummy));
+        if numel(delind) > 1 % several features with same max correlation
+            simmat3 = feat_corr(delind,:);
+            simmat3(simmat3<exclusionthr)=2;
+            simmat3=round(simmat3*100)/100; % 0.01 stepsize maintained
+            min_above_thr=min(simmat3,[],2);
+            delind(find(min_above_thr==max(min_above_thr),1, 'last'));
         end
+        %% before: make 0.01 iterations, check each time how many surpass the threshold
+        %     while length(delind) > 1 % several features with same max correlation
+        %         thrdummy = thrdummy+0.01;
+        %         simmat3 = simmat >= thrdummy;
+        %         simmat3(diag(true(1,size(simmat3,1)))) = 0;
+        %         distdummy = sum(simmat3);
+        %         delind = delind(distdummy(delind) == max(distdummy(delind)));
+        %         if ~sum(distdummy(delind))
+        % %             delind = randsample(delind,1);
+        %             delind = delind(end);
+        %         end
+        %     end
+        feat_corr(:,delind) = [];
+        feat_corr(delind,:) = [];
+        feat_corr_true(:,delind) = [];
+        feat_corr_true(delind,:) = [];
+        indrej = cat(2,indrej,ind(delind));
+        ind(delind)= [];
     end
-    simmat(:,delind) = [];
-    simmat(delind,:) = [];
-    simmat2(:,delind) = [];
-    simmat2(delind,:) = [];
-    indrej = cat(2,indrej,ind(delind));
-    ind(delind)= [];
+    
+    ccall = ccall(:,ind);
+    fnall = fnall(ind);
 end
-
-
-ccall = ccall(:,ind);
-fnall = fnall(ind);
-
-% figure;
-% for i = 1 : size(ccall,2)
-% subplot(8,10,i)
-% plot(hist(ccall(:,i),100));title(fnall(i))
-% end
 
 if size(ccall,2) < maxinputs
     maxinputs = size(ccall,2);
