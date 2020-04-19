@@ -22,7 +22,7 @@ handles.ts_time=[];
 cla(handles.axesTS);
 cla(handles.axesAllClusters);
 cla(handles.axesClust0);
-cla(handles.axesISI0);
+%cla(handles.axesISI0);
 set(handles.hclassify,'Value',0);
 set(handles.hclassify,'String','Classify');
 %-------
@@ -37,14 +37,15 @@ if isfield(handles,'hver'), handles=rmfield(handles,'hver'); end
 set(handles.htoplot,'Value',1);%temporaraly for PT
 for i=1:14, 
     cla(handles.spikeaxes(i));
-    cla(handles.isiaxes(i));
+    %cla(handles.isiaxes(i));
     if i<14, set(handles.hclustergroup{i},'Visible','off'); end
 end
 set(handles.hsuppl,'Visible','Off');
 set(handles.hsuppl2,'Visible','Off');
 set(handles.hdetailsfig,'Visible','Off');
 handles.plotted(1:MAX_CLUS)=0;
-for i=1:MAX_CLUS, handles.classind{i}=[]; end
+% for i=1:MAX_CLUS, handles.classind{i}=[]; end
+handles.classind={};
 handles.fixed(1:MAX_CLUS)=0;
 for i=1:MAX_CLUS, handles.fixed_classind{i}=[]; end
 handles.forced(1:MAX_CLUS)=0;

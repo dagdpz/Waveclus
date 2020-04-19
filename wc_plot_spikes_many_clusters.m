@@ -2,13 +2,13 @@ function handles=wc_plot_spikes_many_clusters(handles,clusterstoplot,ax)
 % plots spike shapes for several clusters
 MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT; %to prevent large plottings
 %define limits
-clusterstoplot(clusterstoplot==0)=length(handles.classind);
+clusterstoplot(clusterstoplot==0)=sum(~cellfun(@isempty,handles.classind));
 t=handles.spikes([handles.classind{clusterstoplot}],:);
 %--------------
 % lims=[min(handles.sp_time) max(handles.sp_time) min(min(t)) max(max(t))];
 %-----------------
-toplot=get(handles.htoplot,'Value');
-
+%toplot=get(handles.htoplot,'Value'); %% this needs to go somewhere else
+toplot=1;
 
 % axes(ax);
 % cla
@@ -16,6 +16,8 @@ toplot=get(handles.htoplot,'Value');
 cla(ax);
 hold(ax,'on');
 n_ss=length(handles.sp_time);
+handles.mean_ss=NaN(max(clusterstoplot),size(handles.spikes,2));
+handles.std_ss=NaN(max(clusterstoplot),size(handles.spikes,2));
 for i=clusterstoplot;
     if i==length(handles.classind), color= [0 0 0];
     else color=handles.colors(i,:); end

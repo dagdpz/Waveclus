@@ -30,8 +30,8 @@ ncol=ceil(sqrt(np));
 
 stepx=0.01; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.01; hight=(1-(nrow+1)*stepy)/nrow;
-k=1;
-for i=1 %:nf,
+k=2;
+for i=2 %:nf,
     for j=i+1:nf,
         mnx=min(min(handles.features(:,i)));
         mny=min(min(handles.features(:,j)));
@@ -42,7 +42,7 @@ for i=1 %:nf,
             'xtick',[],'ytick',[],'xlim',[mnx mxx],'ylim',[mny mxy],...
             'Parent',handles.hfeatures,'ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
         %         axes(handles.hfaxes(k));
-        h=title(sprintf('%s vs %s',handles.feature_names{i},handles.feature_names{j}));
+        h=title(sprintf('%s vs %s',handles.feature_names{j},handles.feature_names{i}));
         set(h,'Units','Normalized','Position',[0.01 .01 0],'verticalalignment','bottom','horizontalalignment','left',...
             'Parent',handles.hfaxes(k));
         box on

@@ -8,7 +8,7 @@ if ispc, handles.system = 'windows'; elseif ismac, handles.system = 'MACI64'; el
 end
 sr = handles.WC.sr;
 
-clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5];
+clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5;0 0 0];
 set(0,'DefaultAxesColorOrder',clus_colors)
 
 switch handles.WC.threshold
@@ -43,12 +43,15 @@ for k =  1 : numel(thresholds)
     handles.fname = [handles.WC_concatenation_folder 'data_' channelfile '_' thresholds{k}];   %filename for interaction with SPC
     handles.fname = ['data_' channelfile '_' thresholds{k}];   %filename for interaction with SPC
     
-    min_clus = max(handles.WC.min_clus_abs,handles.WC.min_clus_rel*nspk);
+    min_clus = max(handles.WC.min_clus_abs,handles.WC.min_clus_rel*min(nspk,handles.WC.max_spikes2cluster));
     handles.WC.min_clus = min_clus;
     
     fprintf('Feature detection...\n');
+        yyy=any(strfind(filename,'dataspikes_ch001_2_SU_neg'));
     %CALCULATES INPUTS TO THE CLUSTERING ALGORITHM
-    [features,feature_names,inputs] = wc_feature_selection(spikes,handles);
+    tic
+    [features,feature_names,inputs] = wc_feature_selection(spikes,index,handles);
+    toc
     handles.WC.inputs = inputs;
     save([handles.WC_concatenation_folder filename],'features','feature_names','-append');
     
@@ -80,27 +83,75 @@ for k =  1 : numel(thresholds)
                 redoCount(k) = redoCount(k) + 1;
             end
         end
-        
         classtemp=cell(size(clu,1),handles.WC.max_nrclasses);
-        for te=1:size(clu,1),
-            %       for j=1:handles.WC.max_nrclasses, classtemp{te,j}=inds_to_cluster(find(clu(te,3:end)==j-1)); end;
-            for j=1:handles.WC.max_nrclasses, classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1)); end;
+        for te=1:size(clu,1) %temperature
+            for j=1:handles.WC.max_nrclasses, 
+                classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1)); 
+            end;
         end
         fprintf('Adding SPC output information into results file...\n');
         save([handles.WC_concatenation_folder filename],'tree','classtemp','-append');
         
-        [temp] = wc_find_temperature(tree,handles); %% here i would like to add a mechanism to loop through temperatures...
-        handles.WC.temp=temp;
-        
-        %DEFINE CLUSTERS for spesific temperature using min_clus variable
-        classind=cell(1,handles.WC.max_nrclasses);
+        n_classes=0;
         for i=1:handles.WC.max_nrclasses,
-            t=classtemp{temp,i};
             classind{i}=[];
-            if length(t)>min_clus, classind{i}=t; end
         end
-        %zero cluster, alo includes all unclustered spikes
+        temp_start=1;
+%         handles.WC.temp=[];
+%         handles.WC.n_clus_per_temp={};
+        handles.WC.clus_per_temp=[];
+        while n_classes < handles.WC.max_nrclasses && temp_start<size(tree,1)% max clusters ( leave 1 for unclustered) not reached yet
+            [temp] = wc_find_temperature(tree(temp_start:end,:),handles); %% need to reduce tree?
+            temp=temp+temp_start-1;
+            
+            %DEFINE CLUSTERS for specific temperature using min_clus variable
+            %             classind=cell(1,handles.WC.max_nrclasses);
+            %             t_remove=true(1,handles.WC.max_nrclasses);
+            n_classes=sum(~cellfun(@isempty,classind));
+            clusters_for_this_temp=[];
+            for i=2:handles.WC.max_nrclasses,
+                t=classtemp{temp,i};
+                t = setdiff(t,[classind{:}]);
+                if length(t)>min_clus && n_classes < handles.WC.max_nrclasses
+                    n_classes=n_classes+1;
+                    classind{n_classes}=t;
+                    clusters_for_this_temp=[clusters_for_this_temp i];
+                end
+            end
+            if temp==temp_start % didnt find appropriate temperature
+                break
+            end
+            if clusters_for_this_temp
+%                 handles.WC.temp=[handles.WC.temp temp]; %% store all used temperatures
+%                 handles.WC.n_clus_per_temp=[handles.WC.n_clus_per_temp {clusters_for_this_temp}]; %% store all used temperatures
+                handles.WC.clus_per_temp=[handles.WC.clus_per_temp [repmat(temp,1,numel(clusters_for_this_temp)); clusters_for_this_temp]];
+            end
+            temp_start=temp;
+        end
+%         if isempty(handles.WC.n_clus_per_temp)
+%             handles.WC.n_clus_per_temp=0;
+%         end
+        %% add biggest cluster of last iteration
+        t=classtemp{temp,1};
+        t = setdiff(t,[classind{:}]);
+        if n_classes+1<handles.WC.max_nrclasses;
+            classind{n_classes+1}=t;
+            
+                handles.WC.clus_per_temp=[handles.WC.clus_per_temp [temp; 1]];
+%             NN=numel(handles.WC.n_clus_per_temp);
+%             if NN>0
+%                 handles.WC.n_clus_per_temp{NN}= [handles.WC.n_clus_per_temp{NN}, 1];                
+%             else
+%                 handles.WC.n_clus_per_temp{1}= 1;
+%                 handles.WC.clus_per_temp=[temp;1];
+%             end
+        end
+        
+        classind(cellfun(@isempty,classind))=[];
+        
+        %zero cluster, includes all unclustered spikes
         classind{end+1}=setdiff(1:nspk, [classind{:}]);
+        
         
         %% classify rest as default
         handles.spikes=spikes;
@@ -111,9 +162,10 @@ for k =  1 : numel(thresholds)
         handles.nspk=nspk;
         clear features feature_names
         
+         %% Forcing as default
         handles=wc_classifyrest(handles);
         classind=handles.classind;
-        %% Forcing as default
+       
         
         
         %prepare to save
@@ -129,7 +181,7 @@ for k =  1 : numel(thresholds)
         %% PLOTTING
         
         if ifplot,
-            
+            handles.isaGUI=0;
             %% export timecourse figure
             handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
             handles.index=index;
@@ -142,7 +194,7 @@ for k =  1 : numel(thresholds)
             close (handles.htimecourse)
             
             
-            %% export cluster figure
+            %% export features figure
             handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
             handles.index=index;
             handles.nfeatures=size(handles.features,2);
@@ -154,101 +206,23 @@ for k =  1 : numel(thresholds)
             close (handles.hfeatures)
             
             %% plotting WC main figure
-            time=[-handles.WC.w_pre+1/handles.WC.int_factor:1/handles.WC.int_factor:handles.WC.w_post]/sr*1000;%timie in ms
-            current_figure_handle=figure;
-            set(0, 'currentfigure', current_figure_handle);
+            handles.rejected=1; %%??
+            handles.plotted=[];
+            handles.sp_time=1:(handles.WC.w_pre+handles.WC.w_post);
+            handles=wc_create_mainfig(handles);
+            handles=wc_plot_spikes_and_ISI(handles);
+            
+            handles.tree=tree;            
+            handles.min_clus=min_clus;
+            handles=wc_plot_temperature(handles);
+        
             set(gcf,'PaperUnits','normalized','PaperPosition',[0.01 0.01 0.98 0.98])
-            clf
-            ncol=5;
-            temp_plot=6;
-            if length(classind)>4, nrow=4;sp_plot=[2 3 4 5 11 12 13 14];
-            else nrow=2;sp_plot=[2 3 4]; end
-            
-            isi_plot=sp_plot+ncol;
-            
-            %temperature plot
-            subplot(nrow,ncol,temp_plot);
-            semilogy(1:handles.WC.num_temp,tree(1:handles.WC.num_temp,5:end));
-            line([temp temp],[1 max(max(tree(:,5:end)))*1.1],'linestyle',':','color','k');
-            line([1 handles.WC.num_temp],[min_clus min_clus],'linestyle',':','color','k');
-            ylim([1 max(max(tree(:,5:end)))*1.1])
-            xlim([0.5 handles.WC.num_temp+0.5]);
-            
-            %all spikes superimposed
-            if length(classind)>1,
-                mn=min(min(spikes([classind{1:end-1}],:)));
-                mx=max(max(spikes([classind{1:end-1}],:)));
-            else %only cluster 0
-                mn=min(min(spikes([classind{1}],:)));
-                mx=max(max(spikes([classind{1}],:)));
-            end
-            
-            subplot(nrow,ncol,1);cla; hold on;
-            if sum(cluster_class(:,1)==0), plot(time, spikes(cluster_class(:,1)==0,:),'color','k'); end
-            for i=1:min(length(classind)-1, handles.WC.max_nrclasses2plot),
-                if ~isempty(classind{i}), plot(time, spikes(classind{i},:),'color',clus_colors(i,1:3)); end
-            end
-            xlim([min(time) max(time)]);
-            ylim([mn mx]);
-            title(sprintf('%s-%s',handles.bname,channelfile),'Fontsize',12,'interpreter','none')
-            
-            %individual clusters
-            for i=1:min(sum(~cellfun(@isempty,classind(1:end-1))), handles.WC.max_nrclasses2plot),%minus cluster 0
-                subplot(nrow,ncol,sp_plot(i));hold on
-                sp=spikes(classind{i},:);
-                plot(time, sp,'color',clus_colors(i,1:3));
-                m=mean(sp);
-                s=std(sp);
-                plot(time, m,'color','k','linewidth',2);
-                plot(time, m+s,'color','k','linewidth',0.5);
-                plot(time, m-s,'color','k','linewidth',0.5);
-                xlim([min(time) max(time)]);
-                ylim([mn mx]);
-                title(sprintf('Cluster %d, #%d',i,length(classind{i})));
-                
-                %isi
-                subplot(nrow,ncol,isi_plot(i));
-                isi=diff(index(classind{i}));
-                edges=0:1:100;
-                if isempty(isi), isi=0; end
-                [N]=histc(isi,edges);
-                h=bar(edges,N,'histc');
-                set(h,'facecolor',clus_colors(i,1:3),'edgecolor',clus_colors(i,1:3),'linewidth',0.01);
-                xlim([0 100]);
-                title(sprintf('%d in <2ms',sum(N(1:2))));
-                xlabel('ISI(ms)');
-            end
-            
-            %cluster zero
-            if sum(cluster_class(:,1)==0),
-                subplot(nrow,ncol,sp_plot(end)+1);hold on
-                sp=spikes(cluster_class(:,1)==0,:);
-                plot(time, sp,'color','k');
-                m=mean(sp);
-                s=std(sp);
-                plot(time, m,'color','c','linewidth',2);
-                plot(time, m+s,'color','c','linewidth',0.5);
-                plot(time, m-s,'color','c','linewidth',0.5);
-                title(sprintf('Cluster 0, #%d',sum(cluster_class(:,1)==0)));
-                xlim([min(time) max(time)]);
-                %isi
-                subplot(nrow,ncol,isi_plot(end)+1);
-                isi=diff(index(cluster_class(:,1)==0));
-                edges=0:1:100;
-                if isempty(isi), isi=0; end
-                [N]=histc(isi,edges);
-                h=bar(edges,N,'histc');
-                set(h,'facecolor','k','edgecolor','k','linewidth',0.01);
-                xlim([0 100]);
-                title(sprintf('%d in <2ms',sum(N(1:2))));
-                xlabel('ISI(ms)');
-            end
             if print2file==0;
                 print
             else
                 %eval(sprintf('print -djpeg fig2print_%s-%d',handles.bname,channelfile));
-                print(current_figure_handle,[handles.bname '-' channelfile '_' thresholds{k} '-clusters'],'-djpeg');
-                close(current_figure_handle);
+                print(handles.mainfig,[handles.bname '-' channelfile '_' thresholds{k} '-clusters'],'-djpeg');
+                close(handles.mainfig);
             end
         end
         %spikes file

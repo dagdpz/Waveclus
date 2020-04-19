@@ -1,9 +1,9 @@
-function [inspk,feature_names,inputs] = wc_feature_selection(spikes,handles)
+function [inspk,feature_names,inputs] = wc_feature_selection(spikes,ts,handles)
 %Calculates the spike features
 
 scales = handles.WC.scales;
 feature = handles.WC.features;
-exclusioncrit = handles.WC.exclusioncrit; % thr; number 
+exclusioncrit = handles.WC.exclusioncrit; % thr; number
 exclusionthr = handles.WC.exclusionthr;
 maxinputs = handles.WC.maxinputs;
 int_factor = handles.WC.int_factor;
@@ -20,7 +20,7 @@ offstart = round(w_pre/2) + shift;
 offend  = round(w_post/2) + shift + w_pre;
 
 ind1 = [fliplr(w_pre : -1: offstart+1),w_pre+1 : offend] * int_factor;
-
+% ind1 = 8:23
 % downfac = 2;
 % ind2 = [fliplr(w_pre : -downfac : offstart+1),w_pre+1 : downfac : offend] * int_factor;
 
@@ -33,9 +33,9 @@ fnall = {};
 if strfind(feature,'wav')
     
     cc=zeros(nspk,length(ind1));
-    for i=1:nspk                                
+    for i=1:nspk
         [c,l]=wavedec(spikes(i,ind1),scales,handles.WC.wavelet);
-        cc(i,:)=c; 
+        cc(i,:)=c;
     end
     
     %features
@@ -55,6 +55,8 @@ if strfind(feature,'wav')
     
     ccall = cat(2,ccall,cc);
     fnall = cat(2,fnall,fn);
+    %norm_factor_WL=diff(prctile(cc(:),[95,5]));
+    norm_factor_WL=std(cc(:));
     clear fn cc
 end
 
@@ -70,8 +72,11 @@ if strfind(feature,'pca')
     for i=1:numdim
         fn{i}=sprintf('PCA,%d',i);
     end
-    
-    ccall = cat(2,ccall,S(:,1:numdim));
+    S=S(:,1:numdim);
+    %norm_factor_PCA=diff(prctile(S(:),[95,5]));
+    norm_factor_PCA=std(S(:));
+    S=S*norm_factor_WL/norm_factor_PCA;
+    ccall = cat(2,ccall,S);
     fnall = cat(2,fnall,fn);
     clear fn S
 end
@@ -80,45 +85,84 @@ end
 %% Raw waveforms
 
 if strfind(feature,'raw')
-%     inddummy = ind1;
-%     inddummy(ind1 == w_pre * int_factor) = [];
-%     spikesdown = spikes(:,inddummy);
+    %     inddummy = ind1;
+    %     inddummy(ind1 == w_pre * int_factor) = [];
+    %     spikesdown = spikes(:,inddummy);
     
     spikesdown = spikes(:,ind1);
     
     %features
     fn = cell(1,length(ind1));
-    for i=1:length(ind1)  
+    for i=1:length(ind1)
         fn{i}=sprintf('Raw,%d',i);
     end
     
-%     fn(ind1 == w_pre * int_factor) = [];
+    %     fn(ind1 == w_pre * int_factor) = [];
     
+    %norm_factor_raw=diff(prctile(spikesdown(:),[95,5]));
+    norm_factor_raw=std(spikesdown(:));
+    spikesdown=spikesdown*norm_factor_WL/norm_factor_raw;
     ccall = cat(2,ccall,spikesdown);
     fnall = cat(2,fnall,fn);
     clear fn inddummy spikesdown
 end
 
-%% first order derivative of waveforms
+% %% first order derivative of waveforms
+% 
+% if strfind(feature,'deriv')
+%        inddummy = ind1(1:round(length(ind1)/2)+1);
+%        draw = diff(spikes(:,inddummy),1,2);
+% 
+%        %features
+%     fn = cell(1,length(inddummy)-1);
+%     for i=1:length(inddummy)-1
+%         fn{i}=sprintf('Deriv,%d',i);
+%     end
+%     
+%     norm_factor_deriv=diff(prctile(draw(:),[95,5]));
+%     draw=draw*norm_factor_WL/norm_factor_deriv;
+%     ccall = cat(2,ccall,draw);
+%     fnall = cat(2,fnall,fn);
+%     clear fn inddummy draw
+%        
+% end
+% 
+% %% peak to trough ratio
+% 
+% if strfind(feature,'peak')
+%     [~,minidx]=min(spikes,[],2);
+%     [~,maxidx]=max(spikes,[],2);
+%     ind1 = sub2ind(size(spikes),1:size(spikes,1),maxidx') ;
+%     ind2 = sub2ind(size(spikes),1:size(spikes,1),minidx') ;
+%     draw = abs(spikes(ind1)./spikes(ind2))';
+% 
+%     
+%     norm_factor_p2t=diff(prctile(draw(:),[95,5]));
+%     draw=draw*norm_factor_WL/norm_factor_p2t;
+%     %features
+%     fn = {sprintf('P2T')};
+% 
+%     ccall = cat(2,ccall,draw);
+%     fnall = cat(2,fnall,fn);
+%     clear fn ind1 ind2 draw maxidx minidx minav
+% 
+% end
 
-if strfind(feature,'deriv')
-       inddummy = ind1(1:round(length(ind1)/2)+1);
-       draw = diff(spikes(:,inddummy),1,2);
+%% time !!!!!!!!!!!!
 
-       %features
-    fn = cell(1,length(inddummy)-1);
-    for i=1:length(inddummy)-1
-        fn{i}=sprintf('Deriv,%d',i);
-    end
+if strfind(feature,'time')
+    norm_factor_t=1800000; %% normalized to 30 minutes
+    %norm_factor_t=diff(prctile(ts(:),[85,15])); %% 70% Ci, basically equivalent to 
+    %norm_factor_t=std(ts(:));
+    draw=ts*norm_factor_WL/norm_factor_t;
     
     ccall = cat(2,ccall,draw);
-    fnall = cat(2,fnall,fn);
-    clear fn inddummy draw
-       
+    fnall = cat(2,fnall,{'Time'});
 end
 
 
-       
+
+
 %% feature selection
 
 warning('off','stats:lillietest:OutOfRangeP');
@@ -134,34 +178,32 @@ sd=nan(1,size(ccall,2));
 for i=1:size(ccall,2)                            % lilliefors test for coefficient selection
     aux = ccall(ccall(:,i) > thr_dist_min(i) & ccall(:,i) < thr_dist_max(i),i); % removing outliers (3x std)
     if length(aux) > 10;
-        [~,~,lstat]=lillietest(aux);
+        [~,~,lstat]=lillietest(aux,0.05);
         sd(i)=lstat;
     else
         sd(i)=0;
     end
 end
+if strfind(feature,'time')
+sd(end)=max(sd)+1; %% to alway keep time??
+end
 
 [sortsd,ind]=sort(-sd); % orders indexes by lstat (KSstatistic) of lilliefors test, the higher ones first
 
 % excluding features if KStatistics below certain threshold (mean +
-% 1.96*std) of a bootstrapped random dummie 
-if strcmp(exclusioncrit,'thr')
-    crit = nan(100,1);
-    for i = 1 : 100
-        dummy = randn(size(spikes,1),1);
-        dummy = dummy(dummy > -3 & dummy < 3);
-        [~,~,lstat]=lillietest(dummy);
-        crit(i) = lstat;
-    end
-    crit = mean(crit) + 1.96*std(crit);
-    
-    ind = ind(sortsd < -crit);
-%     ind = ind2(sortsd < -0.05);
-    
-%     if length(ind) > maxinputs
-%         ind = ind(1 : maxinputs);
+% 1.96*std) of a bootstrapped random dummie
+% if strcmp(exclusioncrit,'thr')
+%     crit = nan(100,1);
+%     for i = 1 : 100
+%         dummy = randn(size(spikes,1),1);
+%         dummy = dummy(dummy > -3 & dummy < 3);
+%         [~,~,lstat]=lillietest(dummy,0.05);
+%         crit(i) = lstat;
 %     end
-end
+%     crit = mean(crit) + 1.96*std(crit);
+%     
+%     ind = ind(sortsd < -crit);
+% end
 
 warning('on','stats:lillietest:OutOfRangeP');
 warning('on','stats:lillietest:OutOfRangePHigh');
@@ -226,9 +268,9 @@ end
 inspk = ccall(:,1:maxinputs);
 feature_names=fnall(1:maxinputs);
 inputs = maxinputs;
-   
 
-fprintf('Selected freatures: ');
+
+fprintf('Selected features: ');
 fprintf('%s ',feature_names{:});
 fprintf('\n')
 

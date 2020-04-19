@@ -1,5 +1,6 @@
 function handles=wc_classifyrest(handles)
 %add possibility to choose between spike shapes and features 
+%rework entirely......
 
 shift = 2;
 shift = shift*handles.WC.int_factor;
@@ -57,7 +58,8 @@ switch handles.WC.classify_method,
                 sample=sample(:,1:2:end);
                 training=training(:,1:2:end);
             end
-            c = classify(sample, training, group, handles.WC.classify_method);
+            %c = wc_classify(sample, training,group, handles.WC.classify_method);
+            c = wc_classify2(sample, training,group);
         else
             c=ones(1,size(sample,1));
         end
