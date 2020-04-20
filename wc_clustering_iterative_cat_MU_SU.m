@@ -49,7 +49,9 @@ for k =  1 : numel(thresholds)
     fprintf('Feature detection...\n');
         yyy=any(strfind(filename,'dataspikes_ch001_2_SU_neg'));
     %CALCULATES INPUTS TO THE CLUSTERING ALGORITHM
+    tic
     [features,feature_names,inputs] = wc_feature_selection(spikes,index,handles);
+    toc
     handles.WC.inputs = inputs;
     save([handles.WC_concatenation_folder filename],'features','feature_names','-append');
     
@@ -69,8 +71,11 @@ for k =  1 : numel(thresholds)
                     features1=features;
                     inds_to_cluster=1:nspk;
                 end
+                
                 save(handles.fname,'features1','-ascii');
+                
                 [clu, tree] = wc_run_cluster(handles);
+                
                 redo = 0;
             catch err
                 disp('Again')
@@ -80,59 +85,73 @@ for k =  1 : numel(thresholds)
         end
         classtemp=cell(size(clu,1),handles.WC.max_nrclasses);
         for te=1:size(clu,1) %temperature
-            for j=1:handles.WC.max_nrclasses,
-                classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1));
+            for j=1:handles.WC.max_nrclasses, 
+                classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1)); 
             end;
         end
         fprintf('Adding SPC output information into results file...\n');
         save([handles.WC_concatenation_folder filename],'tree','classtemp','-append');
         
-        
-        %% automatic temperature selection
+        n_classes=0;
         for i=1:handles.WC.max_nrclasses,
             classind{i}=[];
         end
-        
-        min_clus=handles.WC.min_clus;
-        
-        reduced_tree=tree(2:end,5:end);
-        diff_matrix=diff(tree(:,5:end));
-        diff_matrix_ind=diff_matrix>min_clus & [diff_matrix(2:end,:); -1*ones(1,size(diff_matrix,2))]<0 & tree(2:end,5:end)>min_clus;
-        [ts, clus]=ind2sub(size(diff_matrix_ind),find(diff_matrix_ind));
-        clus_sizes=reduced_tree(sub2ind(size(reduced_tree),ts,clus));
-        [~, sorted_idx]=sort(clus_sizes);
-        sorted_idx=sorted_idx(numel(sorted_idx)-min(handles.WC.max_nrclasses-1,numel(sorted_idx))+1:end);
-        
-        handles.WC.clus_per_temp=[ts(sorted_idx)'+1; clus(sorted_idx)'];
-        valid=[];
-        n_classes=0;
-        for i=1:size(handles.WC.clus_per_temp,2)
-            t=classtemp{ts(i)+1,clus(i)};
-            t = setdiff(t,[classind{:}]);
-            if numel(t)>0
-            n_classes=n_classes+1;
-            classind{n_classes}=t;
-            valid=[valid; i];
+        temp_start=1;
+%         handles.WC.temp=[];
+%         handles.WC.n_clus_per_temp={};
+        handles.WC.clus_per_temp=[];
+        while n_classes < handles.WC.max_nrclasses && temp_start<size(tree,1)% max clusters ( leave 1 for unclustered) not reached yet
+            [temp] = wc_find_temperature(tree(temp_start:end,:),handles); %% need to reduce tree?
+            temp=temp+temp_start-1;
+            
+            %DEFINE CLUSTERS for specific temperature using min_clus variable
+            %             classind=cell(1,handles.WC.max_nrclasses);
+            %             t_remove=true(1,handles.WC.max_nrclasses);
+            n_classes=sum(~cellfun(@isempty,classind));
+            clusters_for_this_temp=[];
+            for i=2:handles.WC.max_nrclasses,
+                t=classtemp{temp,i};
+                t = setdiff(t,[classind{:}]);
+                if length(t)>min_clus && n_classes < handles.WC.max_nrclasses
+                    n_classes=n_classes+1;
+                    classind{n_classes}=t;
+                    clusters_for_this_temp=[clusters_for_this_temp i];
+                end
             end
+            if temp==temp_start % didnt find appropriate temperature
+                break
+            end
+            if clusters_for_this_temp
+%                 handles.WC.temp=[handles.WC.temp temp]; %% store all used temperatures
+%                 handles.WC.n_clus_per_temp=[handles.WC.n_clus_per_temp {clusters_for_this_temp}]; %% store all used temperatures
+                handles.WC.clus_per_temp=[handles.WC.clus_per_temp [repmat(temp,1,numel(clusters_for_this_temp)); clusters_for_this_temp]];
+            end
+            temp_start=temp;
         end
-        handles.WC.clus_per_temp=handles.WC.clus_per_temp(:,valid);
-        
-        % add biggest cluster of last iteration
-        if ~isempty(ts)
-            temp_t=max(ts)+1;
-        else
-            temp_t=1;
-        end
-        t=classtemp{temp_t,1};
+%         if isempty(handles.WC.n_clus_per_temp)
+%             handles.WC.n_clus_per_temp=0;
+%         end
+        %% add biggest cluster of last iteration
+        t=classtemp{temp,1};
         t = setdiff(t,[classind{:}]);
         if n_classes+1<handles.WC.max_nrclasses;
-            classind{n_classes+1}=t;            
-            handles.WC.clus_per_temp=[handles.WC.clus_per_temp [temp_t; 1]];
+            classind{n_classes+1}=t;
+            
+                handles.WC.clus_per_temp=[handles.WC.clus_per_temp [temp; 1]];
+%             NN=numel(handles.WC.n_clus_per_temp);
+%             if NN>0
+%                 handles.WC.n_clus_per_temp{NN}= [handles.WC.n_clus_per_temp{NN}, 1];                
+%             else
+%                 handles.WC.n_clus_per_temp{1}= 1;
+%                 handles.WC.clus_per_temp=[temp;1];
+%             end
         end
+        
         classind(cellfun(@isempty,classind))=[];
         
         %zero cluster, includes all unclustered spikes
-        classind{end+1}=setdiff(1:nspk, [classind{:}]);        
+        classind{end+1}=setdiff(1:nspk, [classind{:}]);
+        
         
         %% classify rest as default
         handles.spikes=spikes;
@@ -142,8 +161,12 @@ for k =  1 : numel(thresholds)
         handles.ncl=max(length(classind)-1);
         handles.nspk=nspk;
         clear features feature_names
+        
+         %% Forcing as default
         handles=wc_classifyrest(handles);
         classind=handles.classind;
+       
+        
         
         %prepare to save
         cluster_class=zeros(nspk,2);
@@ -155,7 +178,8 @@ for k =  1 : numel(thresholds)
         save([handles.WC_concatenation_folder filename],'cluster_class','par','-append','-v6');
         
         
-        %% PLOTTING        
+        %% PLOTTING
+        
         if ifplot,
             handles.isaGUI=0;
             %% export timecourse figure
@@ -167,7 +191,8 @@ for k =  1 : numel(thresholds)
             handles.mainfig=[];
             handles=wc_plot_features_vs_time(handles);
             print(handles.htimecourse,[handles.bname '-' channelfile '_' thresholds{k} '-timecourse'],'-djpeg');
-            close (handles.htimecourse)            
+            close (handles.htimecourse)
+            
             
             %% export features figure
             handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
@@ -195,6 +220,7 @@ for k =  1 : numel(thresholds)
             if print2file==0;
                 print
             else
+                %eval(sprintf('print -djpeg fig2print_%s-%d',handles.bname,channelfile));
                 print(handles.mainfig,[handles.bname '-' channelfile '_' thresholds{k} '-clusters'],'-djpeg');
                 close(handles.mainfig);
             end
@@ -205,7 +231,10 @@ for k =  1 : numel(thresholds)
         clear cluster_class
         clear clu tree classtemp
         clear classind cluster_class
+        %    memory
     end
+        
     disp([' clustering ' handles.WC_concatenation_folder filename ' took ' num2str(round(toc)) ' seconds']);        
 end
 clear handles
+%figure;hist(redoCount,0:1:max(redoCount))
