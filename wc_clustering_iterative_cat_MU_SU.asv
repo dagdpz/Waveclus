@@ -21,7 +21,10 @@ switch handles.WC.threshold
 end
 redoCount = ones(numel(thresholds),1);
 
+
 for k =  1 : numel(thresholds)
+    
+    %    memory
     tic
     channelfile=[sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file)];
     filename=['dataspikes_ch' channelfile '_' thresholds{k} '.mat'];
@@ -44,6 +47,7 @@ for k =  1 : numel(thresholds)
     handles.WC.min_clus = min_clus;
     
     fprintf('Feature detection...\n');
+        yyy=any(strfind(filename,'dataspikes_ch001_2_SU_neg'));
     %CALCULATES INPUTS TO THE CLUSTERING ALGORITHM
     tic
     [features,feature_names,inputs] = wc_feature_selection(spikes,index,handles);
@@ -134,9 +138,13 @@ for k =  1 : numel(thresholds)
         handles.ncl=max(length(classind)-1);
         handles.nspk=nspk;
         clear features feature_names
+        
+         %% Forcing as default
         handles=wc_classifyrest(handles);
         classind=handles.classind;
        
+        
+        
         %prepare to save
         cluster_class=zeros(nspk,2);
         cluster_class(:,2)= index(:);
@@ -146,7 +154,9 @@ for k =  1 : numel(thresholds)
         par=handles.WC; %% saving as 'par'
         save([handles.WC_concatenation_folder filename],'cluster_class','par','-append','-v6');
         
+        
         %% PLOTTING
+        
         if ifplot,
             handles.isaGUI=0;
             %% export timecourse figure
@@ -159,6 +169,7 @@ for k =  1 : numel(thresholds)
             handles=wc_plot_features_vs_time(handles);
             print(handles.htimecourse,[handles.bname '-' channelfile '_' thresholds{k} '-timecourse'],'-djpeg');
             close (handles.htimecourse)
+            
             
             %% export features figure
             handles.const_MAX_SPIKES_TO_PLOT=1000; %to prevent large plottings
@@ -197,7 +208,10 @@ for k =  1 : numel(thresholds)
         clear cluster_class
         clear clu tree classtemp
         clear classind cluster_class
+        %    memory
     end
+        
     disp([' clustering ' handles.WC_concatenation_folder filename ' took ' num2str(round(toc)) ' seconds']);        
 end
 clear handles
+%figure;hist(redoCount,0:1:max(redoCount))

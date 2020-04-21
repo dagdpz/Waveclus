@@ -1,7 +1,6 @@
-function handles=wc_classifyrest(handles)
-%add possibility to choose between spike shapes and features 
+function handles=wc_classifyrest(handles,method)
+%add possibility to choose between spike shapes and features
 %rework entirely......
-
 shift = 2;
 shift = shift*handles.WC.int_factor;
 
@@ -13,7 +12,7 @@ if ~sum(classes==0), return; end %nothing to do, maybe check for this earlier
 group=classes([classes~=0]);
 class0=find(classes==0);
 switch handles.WC.classify_space,
-    case 'spikeshapes', 
+    case 'spikeshapes',
         ints=handles.WC.w_pre*handles.WC.int_factor-handles.WC.w_pre*handles.WC.int_factor/2+1:handles.WC.w_pre*handles.WC.int_factor+handles.WC.w_post*handles.WC.int_factor/2;
         sample=handles.spikes(class0,ints);
         training=handles.spikes(classes~=0,ints);
@@ -25,13 +24,8 @@ switch handles.WC.classify_space,
         ints2 =      handles.WC.w_pre*handles.WC.int_factor + handles.WC.int_factor : handles.WC.int_factor: handles.WC.w_pre*handles.WC.int_factor+handles.WC.w_post*handles.WC.int_factor/2+shift;
         ints = cat(2,ints1,ints2);
         clear ints1 ints2
-%         sample=cat(2,handles.spikes(class0,ints),handles.spikescomp(class0,:),handles.spikesadd(class0,:));
-%         training=cat(2,handles.spikes(classes~=0,ints),handles.spikescomp(classes~=0,:),handles.spikesadd(classes~=0,:));
-%         sample=cat(2,handles.spikes(class0,ints),handles.spikesadd(class0,:));
-%         training=cat(2,handles.spikes(classes~=0,ints),handles.spikesadd(classes~=0,:));
         sample=cat(2,handles.spikes(class0,ints));
         training=cat(2,handles.spikes(classes~=0,ints));
-        
     case 'selectedfeatures',
         
 end
@@ -39,10 +33,8 @@ switch handles.WC.classify_method,
     case 'force',
         %rodrigo's methods
     otherwise
-        
-        [centers, sd] = wc_build_templates(group,training); 
+        [centers, sd] = wc_build_templates(group,training);
         sdnum = handles.WC.template_sdnum;
-        
         index = false(length(class0),1);
         for i = 1 : length(class0) % each spike
             distances = sqrt(sum((ones(size(centers,1),1)*sample(i,:) - centers).^2,2)'); % check distance in all features
@@ -52,14 +44,16 @@ switch handles.WC.classify_method,
             end
             clear distances conforming
         end
-        
         if handles.ncl>1,
             while size(training,2)>size(training,1),%if number of features is bigger then number of spikes % when???
                 sample=sample(:,1:2:end);
                 training=training(:,1:2:end);
             end
-            %c = wc_classify(sample, training,group, handles.WC.classify_method);
-            c = wc_classify2(sample, training,group);
+            if method==1
+                c = wc_classify2(sample, training,group);
+            elseif method==2
+                c = wc_classify(sample, training,group, handles.WC.classify_method);
+            end
         else
             c=ones(1,size(sample,1));
         end

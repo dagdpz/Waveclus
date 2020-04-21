@@ -94,19 +94,14 @@ block=whattofindwhere{handles.channel}{n_file}(1);
 us_idx=strfind(pathname,filesep);
 tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
 if ~exist(tens_fname,'file'),
-    %     error('10 seconds of data file does not exist');
     handles.ts=[0 0];
     handles.ts_time=[0 1];
 else
     q=load(tens_fname);
     handles.ts=double(q.data(1:round(10*handles.WC.sr)))*handles.WC.transform_factor;
     handles.ts_time=(1:length(handles.ts))/handles.WC.sr;
-    %thesholds from spikes file?
     clear q;
     set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
-    % t=cputime-t; fprintf('end loading ts \t\t%1.0f\n',t); t=cputime;
-    
-    %plotting
     wc_plot_raw(handles);
 end
 
@@ -114,7 +109,6 @@ handles=wc_plot_temperature(handles);
 handles=wc_plot_spikes_and_ISI(handles);
 
 set(handles.textStatus,'string',sprintf('%s',handles.filename));
-
 
 % Update handles structure
 guidata(handles.mainfig, handles);
@@ -136,7 +130,6 @@ function classifybutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
 %think about automatically plotting a new (updated) version of features
-
 % %make feature plot invisible
 % if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
 
@@ -190,12 +183,8 @@ if ~all(handles.ts==0), wc_plot_raw(handles); end
 guidata(handles.mainfig, handles);
 
 function changetempbutton_Callback(source, ~)
-% ti=cputime; fprintf('Start change temperature \t\t%1.0f\n',ti); ti=cputime;
 [temp min_clus]= ginput(1);                  %gets the mouse input
-% ti=cputime-ti; fprintf('End input \t\t%1.0f\n',ti); ti=cputime;
-
 handles=guidata(get(source,'UserData'));
-
 temp = round(temp)+1;
 if temp < 1; temp=1;end                 %temp should be within the limits
 if temp > handles.WC.num_temp; temp=handles.WC.num_temp; end
@@ -204,12 +193,6 @@ handles.hhor=handles.hhor(1);
 set(handles.hhor,'ydata',[min_clus min_clus]);
 set(handles.hver,'xdata',[temp-1 temp-1]);
 
-% ti=cputime-ti; fprintf('Got handles \t\t%1.0f\n',ti); ti=cputime;
-
-% axes(handles.axesTemp)
-
-% %make feature plot invisible
-% if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
 %reset forced
 handles.forced(find(handles.forced))=0;
 set(handles.hclassify,'String','Classify');
@@ -283,13 +266,9 @@ end
 
 %cluster zero
 handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
-% ti=cputime-ti; fprintf('end assinging clusters \t\t%1.0f\n',ti); ti=cputime;
 handles=wc_plot_spikes_and_ISI(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
-% ti=cputime-ti; fprintf('end plotting spikes \t\t%1.0f\n',ti); ti=cputime;
-% Update handles structure
 guidata(handles.mainfig, handles);
-% ti=cputime-ti; fprintf('End updating handles \t\t%1.0f\n',ti); ti=cputime;
 
 function rejectbuttons_Callback(source,~)
 % Reject cluster
@@ -379,18 +358,11 @@ handles.mainfig=figure('Visible','on','Units','Normalized','Position',[0 0 1,0.9
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...
     'Name','Wave_clus','NumberTitle','off',...
     'Tag','Mainfig');
-% 'Paperunits','Normalized','Paperorientation','portrait','PaperPosition',[0.01 0.01 0.98 0.98],...
 
 figure(handles.mainfig);
 
-%ncl=handles.ncl;
 ncol=5;
 nrow=4;
-% if ncl<4
-% nrow=2;
-% elseif  ncl<4
-% nrow=3;
-% end
 stepx=0.02; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.05; hight=(1-(nrow+1)*stepy)/nrow;
 
@@ -413,7 +385,6 @@ handles.hsave=uicontrol('units','normalized','Style','pushbutton','String','Save
     'UserData',handles.mainfig,...
     'Position',[stepx+(width+stepx)*4 1-stepy*0.9 0.05 0.035],...
     'Callback',{@savebutton_Callback});
-
 handles.axesTS=axes('position',[stepx 1-(stepy+hight)*( 1 )+stepy*0.5 1-2*stepx hight*0.9],...
     'Tag','TS',...
     'UserData',handles.mainfig,...
@@ -423,8 +394,6 @@ handles.axesAllClusters=axes('position',[stepx 1-(stepy+hight)*( 2 ) width hight
     'Tag','AllClusters','ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
 handles.axesClust0=axes('position',[stepx+(width+stepx)*0 1-(stepy+hight)*( nrow ) width hight],...
     'Tag','Clust0','ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
-% handles.axesISI0=axes('position',[stepx+(width+stepx)*4 1-(stepy+hight)*( 3 )+hight*0.1 width hight*0.9],...
-%     'Tag','ISI0','ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
 handles.hclassify=uicontrol('units','normalized','Style','togglebutton','String','Classify','FontSize',12,...
     'Tag','classify',...
     'UserData',handles.mainfig,...
@@ -459,25 +428,18 @@ handles.htoplot = uicontrol('units','normalized','Style','popupmenu','FontSize',
     'UserData',handles.mainfig,...
     'Position',[stepx+0.12 1-(stepy+hight)*( 1 )-stepy*0.9 0.06 0.03],...
     'Callback',{@toplot_Callback});
-
 handles.hchangetemp=uicontrol('units','normalized','Style','pushbutton','String','Change Temp','FontSize',12,...
     'Tag','ChangeTemp',...
     'UserData',handles.mainfig,...
     'Position',[stepx 1-(stepy+hight)*( 3 )-stepy*0.65 0.15 0.03],...
     'Callback',{@changetempbutton_Callback});
 
-
-ncol=5;
-nrow=4;
-
 i=0;
 for r=2:nrow
     for c=1:ncol-1,
         i=i+1;
-        
         handles.spikeaxes(i)=axes('position',[stepx+(width+stepx)*c 1-(stepy+hight)*r width hight],...
             'Tag',sprintf('Clust%d',i),'ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
-        
         handles.hfix(i) = uicontrol('units','normalized','Style','checkbox','String','Fix','FontSize',12,...
             'Tag',sprintf('Fix%d',i),...
             'UserData',handles.mainfig,...
@@ -493,21 +455,10 @@ for r=2:nrow
             'UserData',handles.mainfig,...
             'Position',[stepx+(width+stepx)*c+0.1 1-(stepy+hight)*r-stepy*0.45 0.05 0.02],...
             'Callback',{@detailsbuttons_Callback});
-        
-        %         handles.isiaxes(i)=axes('position',[stepx+(width+stepx)*mod(r-1,ncol) 1-(stepy+hight)*( 3 ) width hight],...
-        %             'Tag',sprintf('ISI%d',i),'ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
-        
         handles.hclustergroup{i}=[handles.spikeaxes(i) handles.hfix(i) handles.hreject(i) handles.hdetails(i)];
         set(handles.hclustergroup{i},'Visible','Off');
     end
 end
-% TO DO, add context menu to define the type of unit
-% handles.hcmenu=uicontextmenu;
-% labels={'PTN','SU','MU','nSU','noise'};
-% for i=1:length(labels),
-%     handles.hm(i)=uimenu(handles.hcmenu,'Label',labels{i});
-% end
-% set(handles.mainfig,'UIContextMenu',handles.hcmenu);
 
 function handles=create_supplfig(handles)
 
@@ -515,15 +466,13 @@ handles.hsuppl = figure('Visible','Off','Units','Normalized','Position',[0 0 1 0
     'Name','More clusters','NumberTitle','off',...
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...
     'Tag','Supplfig');
-% 'Paperunits','Normalized','Paperorientation','portrait','PaperPosition',[0.01 0.01 0.98 0.98],...
 nrow=4;ncol=5;
 stepx=0.04; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.05; hight=(1-(nrow+1)*stepy)/nrow;
 for i=1:ncol*2,
-    j=i+12;%first three on the first plot
+    j=i+12;
     handles.spikeaxes(j)=axes('position',[stepx+(width+stepx)*mod(i-1,ncol) 1-(stepy+hight)*( (i>ncol)*2+1 ) width hight],...
         'Tag',sprintf('Clust%d',j));
-    
     handles.hfix(j) = uicontrol('units','normalized','Style','checkbox','String','Fix','FontSize',12,...
         'Tag',sprintf('Fix%d',j),...
         'UserData',handles.mainfig,...
@@ -539,9 +488,6 @@ for i=1:ncol*2,
         'UserData',handles.mainfig,...
         'Position',[stepx+(width+stepx)*mod(i-1,ncol)+0.1 1-(stepy+hight)*( (i>ncol)*2+2 )-stepy*0.75 0.05 0.02],...
         'Callback',{@detailsbuttons_Callback});
-    %
-    %     handles.isiaxes(j)=axes('position',[stepx+(width+stepx)*mod(i-1,ncol) 1-(stepy+hight)*( (i>ncol)*2+2 ) width hight],...
-    %         'Tag',sprintf('ISI%d',j));
     handles.hclustergroup{j}=[handles.spikeaxes(j) handles.hfix(j) handles.hreject(j) handles.hdetails(j)];
     set(handles.hclustergroup{j},'Visible','Off');
 end
@@ -551,7 +497,6 @@ handles.hsuppl2 = figure('Visible','Off','Units','Normalized','Position',[0 0 1 
     'Name','More clusters 2','NumberTitle','off',...
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...
     'Tag','Supplfig2');
-% 'Paperunits','Normalized','Paperorientation','portrait','PaperPosition',[0.01 0.01 0.98 0.98],...
 nrow=4;ncol=5;
 stepx=0.04; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.05; hight=(1-(nrow+1)*stepy)/nrow;
@@ -559,7 +504,6 @@ for i=1:ncol*2,
     j=i+3+ncol*2;%first three on the first plot
     handles.spikeaxes(j)=axes('position',[stepx+(width+stepx)*mod(i-1,ncol) 1-(stepy+hight)*( (i>ncol)*2+1 ) width hight],...
         'Tag',sprintf('Clust%d',j));
-    
     handles.hfix(j) = uicontrol('units','normalized','Style','checkbox','String','Fix','FontSize',12,...
         'Tag',sprintf('Fix%d',j),...
         'UserData',handles.mainfig,...
@@ -575,28 +519,11 @@ for i=1:ncol*2,
         'UserData',handles.mainfig,...
         'Position',[stepx+(width+stepx)*mod(i-1,ncol)+0.1 1-(stepy+hight)*( (i>ncol)*2+2 )-stepy*0.75 0.05 0.02],...
         'Callback',{@detailsbuttons_Callback});
-    
-    %     handles.isiaxes(j)=axes('position',[stepx+(width+stepx)*mod(i-1,ncol) 1-(stepy+hight)*( (i>ncol)*2+2 ) width hight],...
-    %         'Tag',sprintf('ISI%d',j));
     handles.hclustergroup{j}=[handles.spikeaxes(j) handles.hfix(j) handles.hreject(j) handles.hdetails(j)];
     set(handles.hclustergroup{j},'Visible','Off');
 end
-
-% function testbuttondown(source,eventdata);
-% handles=guidata(get(source,'UserData'));
-% handles.t=~handles.t;
-% fprintf('%d\n',handles.t);
-% % Update handles structure
-% guidata(handles.mainfig, handles);
-
-
 
 function copy_to_new_window(source,~)
 figure(100);
 cla;
 copyobj(get(source,'children'),gca);
-% if isempty(h), return; end
-% for i=1:length(h),
-%     get()
-% if ~isfield(h,'xdata'), return; end
-% set('xdata',get(source,'xdata'),'ydata',get(source,'ydata'))

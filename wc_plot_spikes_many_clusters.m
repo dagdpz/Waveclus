@@ -4,15 +4,8 @@ MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT; %to prevent large plottings
 %define limits
 clusterstoplot(clusterstoplot==0)=sum(~cellfun(@isempty,handles.classind));
 t=handles.spikes([handles.classind{clusterstoplot}],:);
-%--------------
-% lims=[min(handles.sp_time) max(handles.sp_time) min(min(t)) max(max(t))];
-%-----------------
-%toplot=get(handles.htoplot,'Value'); %% this needs to go somewhere else
 toplot=1;
 
-% axes(ax);
-% cla
-% hold on
 cla(ax);
 hold(ax,'on');
 n_ss=length(handles.sp_time);
@@ -21,11 +14,8 @@ handles.std_ss=NaN(max(clusterstoplot),size(handles.spikes,2));
 for i=clusterstoplot;
     if i==length(handles.classind), color= [0 0 0];
     else color=handles.colors(i,:); end
-    
     spikes=handles.spikes(handles.classind{i},:);
-
     len=size(spikes,1);
-    %     if len==0, cla; title('');continue; end
     if len==0, cla(ax); title(ax,'');continue; end
     %mean and std for whole cluster independent from plotted number
     clear m s 
@@ -72,11 +62,7 @@ for i=clusterstoplot;
     %----------------------
     
 end
-%-------------------
-% v = axis(ax);
 lims=[min(handles.sp_time) max(handles.sp_time) min(min(handles.mean_ss(clusterstoplot(2:end),:)-handles.std_ss(clusterstoplot(2:end),:)))*1.2 max(max(handles.mean_ss(clusterstoplot(2:end),:)+handles.std_ss(clusterstoplot(2:end),:)))*1.2];
 handles.lims = lims;
 axis(ax,lims);
-%---------------------
 set(ax,'XGrid','on');
-% axis(lims);

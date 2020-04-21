@@ -133,6 +133,9 @@ warning('on','stats:lillietest:OutOfRangeP');
 warning('on','stats:lillietest:OutOfRangePHigh');
 warning('on','stats:lillietest:OutOfRangePLow');
 
+
+
+
 ccall = ccall(:,ind);
 fnall = fnall(ind);
 
@@ -158,6 +161,18 @@ if ~isempty(ccall)
             min_above_thr=min(simmat3,[],2);
             delind(find(min_above_thr==max(min_above_thr),1, 'last'));
         end
+        %% before: make 0.01 iterations, check each time how many surpass the threshold
+        %     while length(delind) > 1 % several features with same max correlation
+        %         thrdummy = thrdummy+0.01;
+        %         simmat3 = simmat >= thrdummy;
+        %         simmat3(diag(true(1,size(simmat3,1)))) = 0;
+        %         distdummy = sum(simmat3);
+        %         delind = delind(distdummy(delind) == max(distdummy(delind)));
+        %         if ~sum(distdummy(delind))
+        % %             delind = randsample(delind,1);
+        %             delind = delind(end);
+        %         end
+        %     end
         feat_corr(:,delind) = [];
         feat_corr(delind,:) = [];
         feat_corr_true(:,delind) = [];
@@ -169,6 +184,7 @@ if ~isempty(ccall)
     ccall = ccall(:,ind);
     fnall = fnall(ind);
 end
+
 if size(ccall,2) < maxinputs
     maxinputs = size(ccall,2);
 end
@@ -177,6 +193,16 @@ inspk = ccall(:,1:maxinputs);
 feature_names=fnall(1:maxinputs);
 inputs = maxinputs;
 
+
 fprintf('Selected features: ');
 fprintf('%s ',feature_names{:});
 fprintf('\n')
+
+% %CREATES INPUT MATRIX FOR SPC
+% inspk=zeros(nspk,inputs);
+% for i=1:nspk
+%     for j=1:inputs
+%         inspk(i,j)=cc(i,coeff(j));
+%     end
+% end
+

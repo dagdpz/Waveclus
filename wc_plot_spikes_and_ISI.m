@@ -6,23 +6,18 @@ plotted=find(handles.plotted);
 for i=plotted,
     if i>=handles.rejected,
         cla(handles.spikeaxes(i));
-        %cla(handles.isiaxes(i));
         if handles.isaGUI
             set(handles.hclustergroup{i},'Visible','off');%make axes and assoiciated buttons invisible
         end
-        %set(handles.hclustergroup{i},'Visible','off');%make axes and assoiciated buttons invisible
     end
 end
 %cluster zero
 cla(handles.spikeaxes(end));
-%cla(handles.isiaxes(end));
-
 if handles.nspk~=size(handles.spikes,1), disp('Number of spikes is different in spikes and in spc output file'); end
 %all spikes superimposed
 
 handles.sp_time=1:(handles.WC.w_pre+handles.WC.w_post);
 handles=wc_plot_spikes_many_clusters(handles,0:ncl,handles.axesAllClusters);
-
 
 for i=handles.rejected:ncl,
     if handles.isaGUI
@@ -35,11 +30,6 @@ end
 %cluster zero
 wc_plot_spikes_one_cluster(handles,0);
 wc_plot_ISI(handles,0);
-
-
-% if ncl>3, set(handles.hsuppl,'Visible','on'); 
-% else set(handles.hsuppl,'Visible','off'); 
-% end
 
 handles.plotted=[];
 handles.plotted(1:ncl)=1;
@@ -63,11 +53,8 @@ else %except for cluster 0
     ax=handles.spikeaxes(i);
 end
 
-%toplot=get(handles.htoplot,'Value'); %how many spikes to plot
 toplot=1; %how many spikes to plot
-
 handles.sp_time=1:(handles.WC.w_pre+handles.WC.w_post);
-
 hold(ax,'on');
 spikes=handles.spikes(handles.classind{i},:);
 len=size(spikes,1);
@@ -91,7 +78,6 @@ if newlen>MAX_SPIKES_TO_PLOT,
 end
 
 sp=sp(tind,:);
-
 if toplot~=2,
     VER=version('-release');
     VER=str2double(VER(1:4));
@@ -126,7 +112,6 @@ axis(ax,lims);
 set(ax,'XGrid','on');
 
 function wc_plot_ISI(handles,i)
-
 if i==0, 
     i = length(handles.classind); ax=handles.spikeaxes(end); color='k';
 else
@@ -153,14 +138,10 @@ text(x1+diff(x_lim)/20,y_lim(2)-diff(y_lim)*11/20,sprintf('%d in <2ms, %d in <1m
 axes(ca); 
 
 set(R,'facecolor','w');
-
 N_transformed=N/max(N)*diff(y_lim)/2;%+y_lim(1);
 edges_transformed=edges/max(edges)*diff(x_lim)/2+diff(x_lim)/2+x_lim(1);
-
 h=bar(ax,edges_transformed,N_transformed,'histc');
 ytoshift=get(h,'ydata');
 ytoshift=ytoshift+y_lim(1);
 set(h,'ydata',ytoshift);
-
 set(h,'facecolor',color,'edgecolor',color,'linewidth',0.01);    
-%xlim(ax,[0 100]);

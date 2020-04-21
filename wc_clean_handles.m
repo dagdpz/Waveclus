@@ -3,11 +3,9 @@ function handles=wc_clean_handles(handles)
 MAX_CLUS=handles.MAX_CLUS;
 handles.plotted(1:MAX_CLUS)=0;
 if isfield(handles,'classind'), handles=rmfield(handles,'classind'); end
-%for i=1:MAX_CLUS+1, handles.classind{i}=[]; end
 handles.fixed(1:MAX_CLUS)=0;
 set(handles.hfix,'Value',0);
 if isfield(handles,'fixed_classind'), handles=rmfield(handles,'fixed_classind'); end
-%for i=1:MAX_CLUS, handles.fixed_classind{i}=[]; end
 handles.forced(1:MAX_CLUS)=0;
 for i=1:MAX_CLUS, handles.classind_unforced{i}=[]; end
 handles.rejected=1;
@@ -44,7 +42,6 @@ set(handles.hsuppl,'Visible','Off');
 set(handles.hsuppl2,'Visible','Off');
 set(handles.hdetailsfig,'Visible','Off');
 handles.plotted(1:MAX_CLUS)=0;
-% for i=1:MAX_CLUS, handles.classind{i}=[]; end
 handles.classind={};
 handles.fixed(1:MAX_CLUS)=0;
 for i=1:MAX_CLUS, handles.fixed_classind{i}=[]; end
