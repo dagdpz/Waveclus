@@ -134,7 +134,7 @@ handles=guidata(get(source,'UserData'));
 % if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
 
 if get(handles.hclassify,'value') == 1,
-    handles=wc_classifyrest(handles);
+    handles=wc_classifyrest(handles,2);
     %remove fix from forced clusters
     for i=find(handles.forced),
         set(handles.hfix(i),'Value',0);
@@ -160,21 +160,26 @@ guidata(handles.mainfig, handles);
 function tempmatchbutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
-if get(handles.htempmatch,'value') == 1,
-    handles=wc_match_template(handles);
+%think about automatically plotting a new (updated) version of features
+% %make feature plot invisible
+% if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
+
+if get(handles.hclassify,'value') == 1,
+    handles=wc_classifyrest(handles,1);
+    %remove fix from forced clusters
     for i=find(handles.forced),
         set(handles.hfix(i),'Value',0);
         handles.fixed(i)=0;
     end
-    set(handles.htempmatch,'String','Classified');
-    % else
-    %     for i=1:handles.ncl,
-    %         if ~handles.fixed(i), handles.classind{i}=handles.classind_unforced{i};
-    %         else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
-    %     end
-    %     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    %     handles.forced(find(handles.forced))=0;
-    %     set(handles.htempmatch,'String','Classify');
+    set(handles.hclassify,'String','Classified');
+else
+    for i=1:handles.ncl,
+        if ~handles.fixed(i), handles.classind{i}=handles.classind_unforced{i};
+        else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
+    end
+    handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
+    handles.forced(find(handles.forced))=0;
+    set(handles.hclassify,'String','Classify');
 end
 
 handles=wc_plot_spikes_and_ISI(handles);
