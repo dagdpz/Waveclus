@@ -90,7 +90,7 @@ for k =  1 : numel(thresholds)
         end
         temp_start=1;
         handles.WC.clus_per_temp=[];
-        while n_classes < handles.WC.max_nrclasses && temp_start<size(tree,1)% max clusters ( leave 1 for unclustered) not reached yet
+        while n_classes < handles.WC.max_nrclasses-1 && temp_start<size(tree,1)% max clusters ( leave 1 for unclustered) not reached yet
             [temp] = wc_find_temperature(tree(temp_start:end,:),handles); %% need to reduce tree?
             temp=temp+temp_start-1;
             
