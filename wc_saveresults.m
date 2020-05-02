@@ -8,27 +8,37 @@ cluster_class(:,2)= handles.index;
 for i=1:handles.ncl, cluster_class(handles.classind{i},1)=i; end
 %save data
 timesfile=sprintf('%s.mat',handles.filename);
-save(timesfile,'par','cluster_class','-append');
+save([handles.pathname filesep timesfile],'par','cluster_class','-append');
 %save pictures
-name=sprintf('ch%d-%s.jpg',handles.channel,handles.bname);
-name1=sprintf('ch%d-%s_b.jpg',handles.channel,handles.bname);
-name2=sprintf('ch%d-%s_c.jpg',handles.channel,handles.bname);
+indx=strfind(handles.filename,'_ch');
+fname=['Ch-' handles.filename(indx+3:end)];
+name=sprintf('%s-clusters.jpg',fname);
+name1=sprintf('%s-clustersb.jpg',fname);
+name2=sprintf('%s-clustersc.jpg',fname);
 
+print(handles.mainfig,'-djpeg',[handles.pathname filesep name]);
 if strcmp(get(handles.hsuppl,'Visible'),'on'), 
-    name=sprintf('ch%d-%s_a.jpg',handles.channel,handles.bname);
     figure(handles.hsuppl);
-    print(gcf,'-djpeg',name1);
+        name=[handles.pathname filesep name1];
+    print(gcf,'-djpeg',name);
 end
 if strcmp(get(handles.hsuppl2,'Visible'),'on'), 
     figure(handles.hsuppl2);
-    print(gcf,'-djpeg',name2);
+        name=[handles.pathname filesep name2];
+    print(gcf,'-djpeg',name);
 end
-print(handles.mainfig,'-djpeg',name);
 
 if isfield(handles,'hfeatures'),
     if strcmp(get(handles.hfeatures,'Visible'),'on'), 
         figure(handles.hfeatures);
-        name=sprintf('ch%d-%s-features.jpg',handles.channel,handles.bname);
+        name=[handles.pathname filesep fname '-features'];
+        print(gcf,'-djpeg',name);
+    end
+end
+if isfield(handles,'htimecourse'),
+    if strcmp(get(handles.htimecourse,'Visible'),'on'), 
+        figure(handles.htimecourse);
+        name=[handles.pathname filesep fname '-timecourse'];
         print(gcf,'-djpeg',name);
     end
 end

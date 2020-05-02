@@ -3,6 +3,13 @@ function handles=wc_plot_temperature(handles)
 cax=handles.axesTemp;
 subplot(cax);
 
+if isfield(handles,'hcol')
+    for i=1:numel(handles.hcol)
+        delete(handles.hcol(i));
+    end
+end
+handles.hcol=[];
+
 tree=handles.tree;
 min_clus=handles.min_clus;
 semilogy(1:handles.WC.num_temp,tree(2:handles.WC.num_temp+1,5:end));

@@ -21,6 +21,10 @@ for i=clusterstoplot;
     clear m s 
     m(1,1:n_ss)=mean(spikes,1);
     s(1,1:n_ss)=std(spikes,[],1);
+    if isempty(m)
+        m=zeros(1,n_ss);
+        s=zeros(1,n_ss);
+    end
     handles.mean_ss(i,1:n_ss)=m;
     handles.std_ss(i,1:n_ss)=s;
 

@@ -69,6 +69,7 @@ handles.temp=NaN;
 handles.sp_time=[];
 handles.mean_ss=[];
 handles.std_ss=[];
+handles.hcol=[];
 
 if isfield(handles,'hfeatures'),
     figure(handles.hfeatures);

@@ -119,6 +119,7 @@ for k =  1 : numel(thresholds)
         t = setdiff(t,[classind{:}]);
         if n_classes+1<handles.WC.max_nrclasses;
             classind{n_classes+1}=t;
+            handles.WC.clus_per_temp=[handles.WC.clus_per_temp [temp; 1]];
         end
         
         classind(cellfun(@isempty,classind))=[];
