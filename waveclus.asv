@@ -352,7 +352,7 @@ function fusebutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
 to_fuse=[];
 for i=1:numel(handles.hfuse)
-    if isobject(handles.hfuse(i))
+    if isobject(handles.hfuse(i)
         if get(handles.hfuse(i),'Value')
             to_fuse=[to_fuse, i];
         end

@@ -27,7 +27,7 @@ for k=interv
         colind = cat(1,colind,zeros(max_spikes,3));
     else
         [X,~] = meshgrid(1:3,1:max_spikes);
-        col=handles.colors(k,:);
+        col=handles.colors(mod(k-1,size(handles.colors,1))+1,:);
         colind = cat(1,colind,col(X));
     end
 end

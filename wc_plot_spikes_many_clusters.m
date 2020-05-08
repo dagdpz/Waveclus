@@ -13,7 +13,7 @@ handles.mean_ss=NaN(max(clusterstoplot),size(handles.spikes,2));
 handles.std_ss=NaN(max(clusterstoplot),size(handles.spikes,2));
 for i=clusterstoplot;
     if i==length(handles.classind), color= [0 0 0];
-    else color=handles.colors(i,:); end
+    else color=handles.colors(mod(i-1,size(handles.colors,1))+1,:); end
     spikes=handles.spikes(handles.classind{i},:);
     len=size(spikes,1);
     if len==0, cla(ax); title(ax,'');continue; end
@@ -66,7 +66,9 @@ for i=clusterstoplot;
     %----------------------
     
 end
-lims=[min(handles.sp_time) max(handles.sp_time) min(min(handles.mean_ss(clusterstoplot(2:end),:)-handles.std_ss(clusterstoplot(2:end),:)))*1.2 max(max(handles.mean_ss(clusterstoplot(2:end),:)+handles.std_ss(clusterstoplot(2:end),:)))*1.2];
+lims=[min(handles.sp_time) max(handles.sp_time) ...
+    min([min(handles.mean_ss(clusterstoplot(2:end),:)-handles.std_ss(clusterstoplot(2:end),:)),0])*1.2 ...
+    max([max(handles.mean_ss(clusterstoplot(2:end),:)+handles.std_ss(clusterstoplot(2:end),:)),0.0000001])*1.2];
 handles.lims = lims;
 axis(ax,lims);
 set(ax,'XGrid','on');

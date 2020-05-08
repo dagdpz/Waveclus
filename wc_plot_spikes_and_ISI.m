@@ -42,14 +42,14 @@ MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT; %to prevent large plottings
 %define differences between cluster 0 and other clusters
 %define scale on y axes
 if clustertoplot==0, %all spikes
-    i=length(handles.classind);
+    i=sum(~cellfun(@isempty,handles.classind));
     avecolor=[0.5 0.5 0.5];
     color=[0 0 0];
     ax=handles.spikeaxes(end);
 else %except for cluster 0
     i=clustertoplot;
     avecolor='k';
-    color=handles.colors(i,:);
+    color=handles.colors(mod(i-1,size(handles.colors,1))+1,:);
     ax=handles.spikeaxes(i);
 end
 
@@ -113,9 +113,12 @@ set(ax,'XGrid','on');
 
 function wc_plot_ISI(handles,i)
 if i==0, 
-    i = length(handles.classind); ax=handles.spikeaxes(end); color='k';
+    i = length(handles.classind); 
+    ax=handles.spikeaxes(end); 
+    color='k';
 else
-    ax=handles.spikeaxes(i); color=handles.colors(i,:);
+    ax=handles.spikeaxes(i);     
+    color=handles.colors(mod(i-1,size(handles.colors,1))+1,:);
 end
 isi=diff(handles.index(handles.classind{i}));
 

@@ -77,7 +77,7 @@ for k =  1 : numel(thresholds)
         end
         classtemp=cell(size(clu,1),handles.WC.max_nrclasses);
         for te=1:size(clu,1) %temperature
-            for j=1:handles.WC.max_nrclasses, 
+            for j=1:handles.WC.max_nrclasses+1, 
                 classtemp{te,j}=inds_to_cluster((clu(te,3:end)==j-1)); 
             end;
         end

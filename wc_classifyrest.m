@@ -53,6 +53,8 @@ switch handles.WC.classify_method,
                 c = wc_classify2(sample, training,group);
             elseif method==2
                 c = wc_classify(sample, training,group, handles.WC.classify_method);
+            elseif method==3
+                c = wc_classify3(sample, training,group);
             end
         else
             c=ones(1,size(sample,1));
