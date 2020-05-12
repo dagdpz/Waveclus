@@ -37,12 +37,13 @@ handles.plotted(1:ncl)=1;
 function wc_plot_spikes_one_cluster(handles,clustertoplot)
 % plots spike shape for one cluster, cluster zero treated slightly
 % differently
+ncl=handles.ncl;
 MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT; %to prevent large plottings
 
 %define differences between cluster 0 and other clusters
 %define scale on y axes
 if clustertoplot==0, %all spikes
-    i=sum(~cellfun(@isempty,handles.classind));
+    i=ncl+1;%sum(~cellfun(@isempty,handles.classind));
     avecolor=[0.5 0.5 0.5];
     color=[0 0 0];
     ax=handles.spikeaxes(end);

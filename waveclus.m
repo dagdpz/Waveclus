@@ -448,6 +448,8 @@ handles=wc_plot_features_vs_features(handles);
 handles=guidata(get(source,'UserData'));
 handles=wc_plot_features_vs_time(handles);
 handles=wc_saveresults(handles);
+close(handles.htimecourse);
+close(handles.hfeatures)
 figure(handles.mainfig);
 set(handles.textStatus,'string',sprintf('Saved %s',handles.filename));
 

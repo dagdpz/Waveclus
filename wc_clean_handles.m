@@ -36,10 +36,10 @@ cla(handles.axesTemp);
 if isfield(handles,'hhor'), handles=rmfield(handles,'hhor'); end
 if isfield(handles,'hver'), handles=rmfield(handles,'hver'); end
 set(handles.htoplot,'Value',1);%temporaraly for PT
-for i=1:14, 
+for i=1:numel(handles.spikeaxes), 
     cla(handles.spikeaxes(i));
     %cla(handles.isiaxes(i));
-    if i<14, set(handles.hclustergroup{i},'Visible','off'); end
+    if i<14, set(handles.hclustergroup{i},'Visible','off'); end % cluster 0?
 end
 set(handles.hsuppl,'Visible','Off');
 set(handles.hsuppl2,'Visible','Off');
@@ -73,9 +73,9 @@ handles.sp_time=[];
 handles.mean_ss=[];
 handles.std_ss=[];
 handles.hcol=[];
-
-if isfield(handles,'hfeatures'),
-    figure(handles.hfeatures);
-    clf reset; 
-    set(handles.hfeatures,'Visible','Off');
-end
+% 
+% if isfield(handles,'hfeatures'),
+%     figure(handles.hfeatures);
+%     clf reset; 
+%     set(handles.hfeatures,'Visible','Off');
+% end

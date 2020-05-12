@@ -1,13 +1,12 @@
 function handles=wc_create_featurevstimefig(handles)
-if isfield(handles,'htimecourse'),
-    figure(handles.htimecourse);clf;
-else
+% if isfield(handles,'htimecourse'),
+%     figure(handles.htimecourse);clf;
+% else
     if ishandle(handles.mainfig) %no gui opend
         handles.htimecourse=figure('Visible','Off','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...
             'Name','Features vs time','NumberTitle','off','Color','w',...
             'UserData',handles.mainfig,...
-            'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...
-            'CloseRequestFcn',{@closefeatures_callback},...
+            'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...%            'CloseRequestFcn',{@closefeatures_callback},...
             'Tag','Features');
     else
         handles.htimecourse=figure('Visible','Off','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...
@@ -16,7 +15,7 @@ else
             'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...
             'Tag','Features');
     end
-end
+% end
 
 nf=handles.nfeatures;
 nrow=ceil(sqrt(nf));
@@ -40,11 +39,11 @@ for i=1:nf,
 end
 
 
-function closefeatures_callback(source,eventdata)
-%does not really close, makes it invisible
-handles=guidata(get(source,'UserData'));
-set(handles.htimecourse,'Visible','Off');
-set(handles.mainfig,'Visible','On');
+% function closefeatures_callback(source,eventdata)
+% %does not really close, makes it invisible
+% handles=guidata(get(source,'UserData'));
+% set(handles.htimecourse,'Visible','Off');
+% set(handles.mainfig,'Visible','On');
 
 function copy_to_new_window(source,event);
 figure(100);
