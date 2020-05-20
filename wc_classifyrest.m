@@ -54,7 +54,17 @@ switch handles.WC.classify_method,
             elseif method==2
                 c = wc_classify(sample, training,group, handles.WC.classify_method);
             elseif method==3
-                c = wc_classify5(sample, training,group);
+                c = wc_classify6(sample, training,group);
+%                 for feat=1:size(training,2) 
+%                 c_feat(:,feat) = wc_classify2(sample(:,feat), training(:,feat),group);
+%                 end
+%                 u_group=unique(group);
+%                 for g=u_group
+%                 group_freq(:,g)=sum(c_feat==g,2);
+%                     
+%                 end
+%                 [n,c]=max(group_freq,[],2);
+%                 c(n<numel(u_group)/3)=0;
             end
         else
             c=ones(1,size(sample,1));

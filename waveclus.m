@@ -8,7 +8,7 @@ handles.MINISI=[0.01:0.01:0.09 0.1:0.1:3 4:64 100:100:1000];
 handles.MAX_CLUS=15;
 handles.classify_space='features';
 handles.classify_method= 'linear';
-clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.5 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5;0 0 0];
+clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.6 0 0; 0 0.6 0; 0 0 0.6; 0 0 0.6;0 0 0];
 set(0,'DefaultAxesColorOrder',clus_colors);
 handles.colors= clus_colors;
 
@@ -255,7 +255,7 @@ tree=handles.tree;
 toplot=find(tree(temp,5:end-1)>=min_clus);%find clusters which are big enough to plot (-1 temporary debug)
 
 
-fixed_temps=handles.WC.clus_per_temp(:,fixed);
+fixed_temps=handles.WC.clus_per_temp(:,fixed(fixed<=size(handles.WC.clus_per_temp,2)));
 for c=1:numel(handles.hcol)
     delete(handles.hcol(c));
 end
@@ -360,10 +360,15 @@ for i=1:numel(handles.hfuse)
 end
 if numel(to_fuse)>1
     f=min(to_fuse);
+    clustemp=handles.WC.clus_per_temp(:,to_fuse);
     to_fuse=to_fuse(to_fuse~=f);
     handles.WC.clus_per_temp(:,to_fuse)=[];
     already_fused=0;
+    M=numel(handles.classind{f});
+        largest_cluster=f;
+    
     for i=to_fuse
+        n=numel(handles.classind{i});
         i=i-already_fused;
         handles.classind{f}=[handles.classind{f} handles.classind{i}];
         handles.classind=handles.classind(1:length(handles.classind)~=i);
@@ -374,7 +379,13 @@ if numel(to_fuse)>1
             set(handles.hfix(j),'Value',get(handles.hfix(j+1),'Value'));
         end
         already_fused=already_fused+1;
+        if n>M
+        largest_cluster=i;
+        M=n;
+        end
     end
+    
+    handles.WC.clus_per_temp(:,f)=clustemp(:,[f to_fuse]==largest_cluster);
     n_fused=numel(to_fuse);
     handles.fixed(end-n_fused+1:end)=0;
     set(handles.hfix(end-n_fused+1:end),'Value',0);

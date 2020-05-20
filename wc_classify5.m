@@ -9,10 +9,18 @@ while carry_on
     group_prevalence=hist(group,unique_groups);
     samples_to_classify=[];
     groups_to_classify=[];
-    for g=unique(group)
-        stepsize_per_group(g,:)=std(training(group==g,:),1,1);
+    u_groups=unique(group);
+    
+    for g=u_groups
+        mean_per_group(g,:)=mean(training(group==g,:),1);
+    end
+    for g=u_groups
+        sep_per_group(g,:)=min(abs(bsxfun(@minus,mean_per_group(u_groups~=g,:),mean_per_group(g,:))));
+    end
+    for g=u_groups
+        stepsize_per_group(g,:)=std(training(group==g,:),0,1);
         %% new
-        [~,min_idx]=sort(stepsize_per_group(g(1),2:end));
+        [~,min_idx]=sort(-sep_per_group(g,2:end));
         max_idx=features_idx(~ismember(features_idx,[1 min_idx(1:4)+1])); %% take only 4 dimensions?
         stepsize_per_group(g,max_idx)=Inf;
     end
