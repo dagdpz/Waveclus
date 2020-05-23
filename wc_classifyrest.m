@@ -9,8 +9,13 @@ for i=1:handles.ncl
     classes(handles.classind{i})=i;
 end
 if ~sum(classes==0), return; end %nothing to do, maybe check for this earlier
-group=classes([classes~=0]);
 class0=find(classes==0);
+%% dont use fixed for classifying !!!
+fixed=find(handles.fixed);
+fixed(fixed>handles.ncl)=[];
+classes(ismember(classes,fixed))=0;
+
+group=classes([classes~=0]);
 switch handles.WC.classify_space,
     case 'spikeshapes',
         ints=handles.WC.w_pre*handles.WC.int_factor-handles.WC.w_pre*handles.WC.int_factor/2+1:handles.WC.w_pre*handles.WC.int_factor+handles.WC.w_post*handles.WC.int_factor/2;
@@ -74,6 +79,6 @@ end
 handles.classind_unforced=handles.classind;
 for i=1:handles.ncl,
     handles.classind{i}=sort([handles.classind{i} class0(c==i)]);
-    handles.forced(i)=1;
+   % handles.forced(i)=1;
 end
 handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);

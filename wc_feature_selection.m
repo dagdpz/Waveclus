@@ -10,7 +10,14 @@ w_pre = handles.WC.w_pre;
 w_post = handles.WC.w_post;
 nspk=size(spikes,1);
 len = size(spikes,2)/int_factor;
-shift = 2;
+
+%% this part is more than dubious...!!!!
+%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% w_pre=10;
+% int_factor=1;
+% shift = 2;
+% w_post = 22;
 offstart = round(w_pre/2) + shift;
 offend  = round(w_post/2) + shift + w_pre;
 ind1 = [fliplr(w_pre : -1: offstart+1),w_pre+1 : offend] * int_factor;

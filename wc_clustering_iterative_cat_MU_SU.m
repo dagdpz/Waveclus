@@ -134,6 +134,7 @@ for k =  1 : numel(thresholds)
         handles.feature_names=feature_names;
         handles.ncl=max(length(classind)-1);
         handles.nspk=nspk;
+        handles.fixed=zeros(1,handles.ncl);
         clear features feature_names
         handles=wc_classifyrest(handles,1);
         classind=handles.classind;

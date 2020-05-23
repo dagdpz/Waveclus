@@ -57,6 +57,7 @@ end
 toplot=1; %how many spikes to plot
 handles.sp_time=1:(handles.WC.w_pre+handles.WC.w_post);
 hold(ax,'on');
+if i>numel(handles.classind); return; end
 spikes=handles.spikes(handles.classind{i},:);
 len=size(spikes,1);
 if len==0, cla(ax); title(ax,'');return; end
