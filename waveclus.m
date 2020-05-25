@@ -471,7 +471,7 @@ timesfile=sprintf('%s.mat',handles.filename);
 allfiles=dir([handles.pathname filesep 'dataspikes*.mat']);
 allfiles={allfiles.name};
 idx=find(strcmp(allfiles,timesfile));
-idx=mod(idx+1,numel(allfiles));
+idx=mod(idx,numel(allfiles))+1;
 
 %% this part is simply duplicated
 
