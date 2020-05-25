@@ -21,6 +21,7 @@ while carry_on
             close_groups=group(idx_close);
             hh=hist(close_groups,unique_groups)./group_prevalence;
             [~,g]=max(hh);
+            g=unique_groups(g);
             samples_to_classify=[samples_to_classify;s];
             groups_to_classify=[groups_to_classify;g];
             carry_on=true;

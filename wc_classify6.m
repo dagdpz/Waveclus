@@ -37,6 +37,7 @@ while carry_on
     
     idx=any(histo,2);
     [~,g]=max(histo,[],2);
+    g=unique_groups(g)';
     if any(idx)
         samples_to_classify=find(idx);
         groups_to_classify=g(idx)';
