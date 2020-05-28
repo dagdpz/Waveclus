@@ -18,9 +18,9 @@ len = size(spikes,2)/int_factor;
 % int_factor=1;
 % shift = 2;
 % w_post = 22;
-offstart = round(w_pre/2) + shift;
-offend  = round(w_post/2) + shift + w_pre;
-ind1 = [fliplr(w_pre : -1: offstart+1),w_pre+1 : offend] * int_factor;
+% offstart = round(w_pre/2) + shift;
+% offend  = round(w_post/2) + shift + w_pre;
+ind1 = 1:(w_post+w_pre);
 
 % CALCULATES FEATURES
 ccall = [];
