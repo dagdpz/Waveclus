@@ -25,10 +25,13 @@ set(handles.hclassify,'Value',0);
 set(handles.hclassify,'String','Classify');
 %-------
 set(handles.htempmatch,'Value',0);
-set(handles.htempmatch,'String','Nearest');
+set(handles.htempmatch,'String','Near');
 %-------
 set(handles.htempmatch2,'Value',0);
-set(handles.htempmatch2,'String','Nearest 0');
+set(handles.htempmatch2,'String','Near T');
+%-------
+set(handles.htempmatch3,'Value',0);
+set(handles.htempmatch3,'String','NearT1');
 
 
 %-------

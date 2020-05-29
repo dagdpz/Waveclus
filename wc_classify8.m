@@ -1,11 +1,9 @@
-function outclass = wc_classify6(sample, training, group)
-carry_on=true;
+function outclass = wc_classify8(sample, training, group)
+%carry_on=true;
 outidxes=1:size(sample,1);
 unique_groups=unique(group);
 outclass=zeros(size(outidxes));
 features_idx=1:size(training,2);
-while carry_on
-    carry_on=false;
     std_per_feature=std([training],1);
     std_per_feature(1)=std_per_feature(1)/10; %% making time mor eimportant
     group_prevalence=hist(group,unique_groups);
@@ -34,8 +32,6 @@ while carry_on
         group=[group groups_to_classify];
         outidxes(samples_to_classify)=[];
         sample(samples_to_classify,:)=[];
-        carry_on=true;
     end
-end
 end
 

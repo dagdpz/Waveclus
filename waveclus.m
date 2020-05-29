@@ -129,17 +129,8 @@ guidata(handles.mainfig, handles);
 function classifybutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
-%think about automatically plotting a new (updated) version of features
-% %make feature plot invisible
-% if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
-
 if get(handles.hclassify,'value') == 1,
     handles=wc_classifyrest(handles,2);
-%     %remove fix from forced clusters
-%     for i=find(handles.forced),
-%         set(handles.hfix(i),'Value',0);
-%         handles.fixed(i)=0;
-%     end
     set(handles.hclassify,'String','Classified');
 else
     for i=1:handles.ncl,
@@ -148,7 +139,6 @@ else
         else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
     end
     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    %handles.forced(find(handles.forced))=0;
     set(handles.hclassify,'String','Classify');
 end
 
@@ -160,17 +150,8 @@ guidata(handles.mainfig, handles);
 function tempmatchbutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
-%think about automatically plotting a new (updated) version of features
-% %make feature plot invisible
-% if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
-
 if get(handles.htempmatch,'value') == 1,
     handles=wc_classifyrest(handles,1);
-    %remove fix from forced clusters
-%     for i=find(handles.forced),
-%         set(handles.hfix(i),'Value',0);
-%         handles.fixed(i)=0;
-%     end
     set(handles.htempmatch,'String','Matched');
 else
     for i=1:handles.ncl,
@@ -178,8 +159,7 @@ else
         else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
     end
     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    %handles.forced(find(handles.forced))=0;
-    set(handles.htempmatch,'String','Nearest');
+    set(handles.htempmatch,'String','Near');
 end
 
 handles=wc_plot_spikes_and_ISI(handles);
@@ -190,17 +170,8 @@ guidata(handles.mainfig, handles);
 function tempmatchbutton2_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
-%think about automatically plotting a new (updated) version of features
-% %make feature plot invisible
-% if isfield(handles,'hfeatures'), set(handles.hfeatures,'Visible','Off'); end
-
 if get(handles.htempmatch2,'value') == 1,
     handles=wc_classifyrest(handles,3);
-%     %remove fix from forced clusters
-%     for i=find(handles.forced),
-%         set(handles.hfix(i),'Value',0);
-%         handles.fixed(i)=0;
-%     end
     set(handles.htempmatch2,'String','Matched');
 else
     for i=1:handles.ncl,
@@ -208,8 +179,28 @@ else
         else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
     end
     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    %handles.forced(find(handles.forced))=0;
-    set(handles.htempmatch2,'String','Nearest 0');
+    set(handles.htempmatch2,'String','Near T');
+end
+
+handles=wc_plot_spikes_and_ISI(handles);
+if ~all(handles.ts==0), wc_plot_raw(handles); end
+% Update handles structure
+guidata(handles.mainfig, handles);
+
+
+function tempmatchbutton3_Callback(source, ~)
+handles=guidata(get(source,'UserData'));
+
+if get(handles.htempmatch3,'value') == 1,
+    handles=wc_classifyrest(handles,4);
+    set(handles.htempmatch3,'String','Matched');
+else
+    for i=1:handles.ncl,
+        if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]);
+        else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
+    end
+    handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
+    set(handles.htempmatch3,'String','NearT1');
 end
 
 handles=wc_plot_spikes_and_ISI(handles);
@@ -232,10 +223,12 @@ set(handles.hver,'xdata',[temp-1 temp-1]);
 %handles.forced(find(handles.forced))=0;
 set(handles.hclassify,'String','Classify');
 set(handles.hclassify,'Value',0);
-set(handles.htempmatch,'String','Nearest');
+set(handles.htempmatch,'String','Near');
 set(handles.htempmatch,'Value',0);
-set(handles.htempmatch2,'String','Nearest 0');
+set(handles.htempmatch2,'String','NearT');
 set(handles.htempmatch2,'Value',0);
+set(handles.htempmatch3,'String','NearT1');
+set(handles.htempmatch3,'Value',0);
 
 handles.classind={};
 handles.temp=temp;
@@ -319,8 +312,12 @@ end
 %handles.forced(find(handles.forced))=0;
 set(handles.hclassify,'String','Classify');
 set(handles.hclassify,'Value',0);
-set(handles.htempmatch,'String','Nearest');
+set(handles.htempmatch,'String','Near');
 set(handles.htempmatch,'Value',0);
+set(handles.htempmatch2,'String','NearT');
+set(handles.htempmatch2,'Value',0);
+set(handles.htempmatch3,'String','NearT1');
+set(handles.htempmatch3,'Value',0);
 
 if find(handles.fixed),
     handles.fixed(i:end-1)=handles.fixed(i+1:end);
@@ -411,8 +408,12 @@ end
 %handles.forced(find(handles.forced))=0;
 set(handles.hclassify,'String','Classify');
 set(handles.hclassify,'Value',0);
-set(handles.htempmatch,'String','Nearest');
+set(handles.htempmatch,'String','Near');
 set(handles.htempmatch,'Value',0);
+set(handles.htempmatch2,'String','Near T');
+set(handles.htempmatch2,'Value',0);
+set(handles.htempmatch3,'String','NearT1');
+set(handles.htempmatch3,'Value',0);
 handles=wc_plot_spikes_and_ISI(handles);
 handles=wc_plot_temperature(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
@@ -610,18 +611,23 @@ handles.axesClust0=axes('position',[stepx+(width+stepx)*0 1-(stepy+hight)*( nrow
 handles.hclassify=uicontrol('units','normalized','Style','togglebutton','String','Classify','FontSize',12,...
     'Tag','classify',...
     'UserData',handles.mainfig,...
-    'Position',[stepx  1-(stepy+hight)*( nrow )-stepy*0.9 0.04 0.035],...
+    'Position',[stepx-0.01  1-(stepy+hight)*( nrow )-stepy*0.9 0.04 0.035],...
     'Callback',{@classifybutton_Callback});
-handles.htempmatch=uicontrol('units','normalized','Style','togglebutton','String','Nearest','FontSize',12,...
-    'Tag','Nearest',...
+handles.htempmatch=uicontrol('units','normalized','Style','togglebutton','String','Near','FontSize',12,...
+    'Tag','Near',...
     'UserData',handles.mainfig,...
-    'Position',[stepx+0.04 1-(stepy+hight)*( nrow )-stepy*0.9 0.04 0.035],...
+    'Position',[stepx+0.03 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
     'Callback',{@tempmatchbutton_Callback});
-handles.htempmatch2=uicontrol('units','normalized','Style','togglebutton','String','Nearest 0','FontSize',12,...
-    'Tag','Nearest 0',...
+handles.htempmatch2=uicontrol('units','normalized','Style','togglebutton','String','Near T','FontSize',12,...
+    'Tag','Near T',...
     'UserData',handles.mainfig,...
-    'Position',[stepx+0.08 1-(stepy+hight)*( nrow )-stepy*0.9 0.04 0.035],...
+    'Position',[stepx+0.06 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
     'Callback',{@tempmatchbutton2_Callback});
+handles.htempmatch3=uicontrol('units','normalized','Style','togglebutton','String','NearT1','FontSize',12,...
+    'Tag','NearT1',...
+    'UserData',handles.mainfig,...
+    'Position',[stepx+0.09 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
+    'Callback',{@tempmatchbutton3_Callback});
 handles.hfuseclusters=uicontrol('units','normalized','Style','togglebutton','String','Fuse','FontSize',12,...
     'Tag','fuse',...
     'UserData',handles.mainfig,...
