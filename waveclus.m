@@ -209,7 +209,10 @@ if ~all(handles.ts==0), wc_plot_raw(handles); end
 guidata(handles.mainfig, handles);
 
 function changetempbutton_Callback(source, ~)
-[temp min_clus]= ginput(1);                  %gets the mouse input
+[temp min_clus buttn]= ginput(1);                  %gets the mouse input
+if buttn==3
+    return;
+end
 handles=guidata(get(source,'UserData'));
 temp = round(temp)+1;
 if temp < 1; temp=1;end                 %temp should be within the limits
