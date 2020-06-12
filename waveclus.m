@@ -372,7 +372,6 @@ if numel(to_fuse)>1
     already_fused=0;
     M=numel(handles.classind{f});
     largest_cluster=f;
-    
     for i=to_fuse
         i=i-already_fused;
         n=numel(handles.classind{i});
@@ -384,11 +383,11 @@ if numel(to_fuse)>1
             handles.fixed(j)=handles.fixed(j+1);
             set(handles.hfix(j),'Value',get(handles.hfix(j+1),'Value'));
         end
-        already_fused=already_fused+1;
         if n>M
-            largest_cluster=i;
+            largest_cluster=i+already_fused;
             M=n;
         end
+        already_fused=already_fused+1;
     end
     
     handles.WC.clus_per_temp(:,f)=clustemp(:,[f to_fuse]==largest_cluster);
@@ -522,6 +521,7 @@ clear q;
 load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
 us_idx=strfind(filename,'_');
 n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
+handles.channel=str2double(filename(us_idx(1)+3:us_idx(2)-1));
 block=whattofindwhere{handles.channel}{n_file}(1);
 us_idx=strfind(pathname,filesep);
 tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
@@ -559,6 +559,7 @@ handles=guidata(get(source,'UserData'));
 % eval('delete(handles.mainfig)','');
 handles.ncl=numel(handles.classind);
 handles=wc_plot_spikes_and_ISI(handles);
+handles.WC.clus_per_temp=[[1;1] handles.WC.clus_per_temp];
 guidata(handles.mainfig, handles);
 
 function handles=create_mainfig(handles)
