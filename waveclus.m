@@ -474,11 +474,12 @@ timesfile=sprintf('%s.mat',handles.filename);
 allfiles=dir([handles.pathname filesep 'dataspikes*.mat']);
 allfiles={allfiles.name};
 idx=find(strcmp(allfiles,timesfile));
-idx=mod(idx,numel(allfiles))+1;
 
 %% this part is simply duplicated
 
-
+fileinvalid=1;
+while fileinvalid
+idx=mod(idx,numel(allfiles))+1;
 handles.filename=allfiles{idx}(1:end-4);
 
 filename=handles.filename;
@@ -488,14 +489,18 @@ set(handles.textStatus,'string',sprintf('Loading %s',handles.filename),'fontsize
 
 q=load(sprintf('%s.mat',[pathname filesep handles.filename]));
 
+idx=idx+1;
+if isfield(q,'features')
+    fileinvalid=0;
+end
+end
+
 handles.WC=q.par;
 handles.WC.thr = q.thr;
 handles.index=q.cluster_class(:,2);
 handles.nspk=length(handles.index);
 handles.ncl=max(q.cluster_class(:,1));
 handles.nfeatures=size(q.features,2);
-
-
 handles.min_clus=q.par.min_clus;
 if isfield(q.par,'temp'),handles.temp=q.par.temp; else handles.temp=0; end
 
