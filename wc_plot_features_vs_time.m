@@ -14,7 +14,7 @@ end
 
 
 interv=find(cellfun(@isempty,handles.classind) == 0); %different clusters
-featureind = [];
+toplotind = [];
 colind = [];
 zeroind = max(interv);
 
@@ -22,7 +22,7 @@ zeroind = max(interv);
 for k=interv
     max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
     spk_indexes=randperm(length(handles.classind{k}));
-    featureind = cat(2,featureind,handles.classind{k}(spk_indexes(1:max_spikes)));
+    toplotind = cat(2,toplotind,handles.classind{k}(spk_indexes(1:max_spikes)));    
     if k == zeroind &&  handles.ncl<k
         colind = cat(1,colind,zeros(max_spikes,3));
     else
@@ -42,13 +42,36 @@ VER=version('-release');
 VER=str2double(VER(1:4));
 
 %kk=1;
-for i=1:nf
+
+%%first plot is histogram
+cax=handles.htaxes(1);
+cla(cax);hold(cax,'on');
+mxx=prctile(handles.features(:,1),99.9)*1.1;
+mnx=prctile(handles.features(:,1),0.1)*1.1;
+bins=[min(handles.index(toplotind)) max(handles.index(toplotind))];
+bins=[bins(1):diff(bins)/100:bins(2)-diff(bins)/200]+diff(bins)/200;
+
+    histo=hist(handles.index,bins);
+    max_all=max(histo);
+    histo=histo/max_all*(mxx-mnx);
+    histo=histo+mnx;
+    plot(cax,histo,bins,'k:','linewidth',2);
+for k=interv
+    histo=hist(handles.index(handles.classind{k}),bins);
+    histo=histo/max_all*(mxx-mnx);
+    histo=histo+mnx;
+    plot(cax,histo,bins,'color',handles.colors(mod(k-1,size(handles.colors,1))+1,:));
+end
+
+
+for i=2:nf
     %for j=i+1:nf
     cax=handles.htaxes(i);
     cla(cax);hold(cax,'on');
+        
     %         hLine = plot(cax,handles.features(featureind,i),handles.features(featureind,j),'.','markersize',5);
     if VER>=2014 %since this part only works for matlab 2014 +
-        hLine = scatter(cax,handles.features(featureind,i),handles.index(featureind),1,colind(:,1:3),'o','filled');
+        hLine = scatter(cax,handles.features(toplotind,i),handles.index(toplotind),1,colind(:,1:3),'o','filled');
         hLine.MarkerHandle.get;
         drawnow
         hLine.MarkerHandle.EdgeColorBinding = 'discrete';
@@ -57,7 +80,7 @@ for i=1:nf
         hLine.MarkerHandle.FaceColorData = uint8(255*colind)';
     else
             [~, colix]=ismember(colind(:,1:3),handles.colors(used_colors,:),'rows');
-        hLine = scatter(cax,handles.features(featureind,i),handles.index(featureind),30,colix,'.');
+        hLine = scatter(cax,handles.features(toplotind,i),handles.index(toplotind),30,colix,'.');
         drawnow
     end
     %         set(hLine.MarkerHandle,'EdgeColorBinding','discrete','EdgeColorData',uint8(255*colind)')
