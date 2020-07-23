@@ -575,6 +575,9 @@ handles=guidata(get(source,'UserData'));
 % eval('delete(handles.hdetailsfig)','');
 % eval('delete(handles.mainfig)','');
 handles.ncl=numel(handles.classind);
+handles.classind_unforced{end+1}=handles.classind_unforced{end}; %% end has to be the new cluster, end+1 has to be the rest from not sorted
+handles.classind_unforced{end-1}=[];
+handles.classind{end+1}=[]; 
 handles=wc_plot_spikes_and_ISI(handles);
 handles.WC.clus_per_temp=[[1;1] handles.WC.clus_per_temp];
 guidata(handles.mainfig, handles);
