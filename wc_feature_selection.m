@@ -115,8 +115,14 @@ for i=1:size(ccall,2)                            % lilliefors test for coefficie
         sd(i)=0;
     end
 end
+
+%% to always keep pca 1,2,3 and time
+if strfind(feature,'pca')
+    ix=ismember(fn,{'PCA,1','PCA,2','PCA,3'});    
+    sd(ix)=max(sd)+sd(ix);
+end
 if strfind(feature,'time')
-sd(end)=max(sd)+1; %% to alway keep time??
+    sd(end)=max(sd)+1; 
 end
 
 [sortsd,ind]=sort(-sd); % orders indexes by lstat (KSstatistic) of lilliefors test, the higher ones first

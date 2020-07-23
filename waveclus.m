@@ -33,8 +33,13 @@ handles=wc_clean_handles(handles);
 guidata(handles.mainfig, handles);
 handles=guidata(get(source,'UserData'));
 mainfolder=['Y:' filesep 'Data' filesep 'Sortcodes' filesep];
-if exist(mainfolder,'dir')
-    [filename, pathname] = uigetfile('*spikes_ch*.mat','Select file',mainfolder);
+if isfield(handles,'pathname')
+   currentfolder=handles.pathname;
+else
+   currentfolder=mainfolder;
+end
+if exist(currentfolder,'dir')
+    [filename, pathname] = uigetfile('*spikes_ch*.mat','Select file',currentfolder);
 else
     [filename, pathname] = uigetfile('*spikes_ch*.mat','Select file');
 end
@@ -109,10 +114,111 @@ end
 handles=wc_plot_temperature(handles);
 handles=wc_plot_spikes_and_ISI(handles);
 
-set(handles.textStatus,'string',sprintf('%s',handles.filename));
+set(handles.textStatus,'string',sprintf('%s',[pathname(numel(mainfolder)+1:end) handles.filename]));
 
 % Update handles structure
 guidata(handles.mainfig, handles);
+
+function nextbutton_Callback(source,~)
+handles=guidata(get(source,'UserData'));
+
+timesfile=sprintf('%s.mat',handles.filename);
+allfiles=dir([handles.pathname filesep 'dataspikes*.mat']);
+allfiles={allfiles.name};
+idx=find(strcmp(allfiles,timesfile));
+
+%% this part is simply duplicated
+
+fileinvalid=1;
+while fileinvalid
+idx=mod(idx,numel(allfiles))+1;
+handles.filename=allfiles{idx}(1:end-4);
+
+filename=handles.filename;
+pathname=handles.pathname;
+handles=wc_clean_handles(handles);
+set(handles.textStatus,'string',sprintf('Loading %s',handles.filename),'fontsize',14);
+
+q=load(sprintf('%s.mat',[pathname filesep handles.filename]));
+
+idx=idx+1;
+if isfield(q,'features')
+    fileinvalid=0;
+end
+end
+
+handles.WC=q.par;
+handles.WC.thr = q.thr;
+handles.index=q.cluster_class(:,2);
+handles.nspk=length(handles.index);
+handles.ncl=max(q.cluster_class(:,1));
+handles.nfeatures=size(q.features,2);
+handles.min_clus=q.par.min_clus;
+if isfield(q.par,'temp'),handles.temp=q.par.temp; else handles.temp=0; end
+
+if isfield(q,'spikes')
+    handles.spikes=q.spikes;
+else
+    spikesfile=sprintf('spikes_%s.mat',handles.filename);
+    qq=load(spikesfile);
+    handles.spikes=qq.spikes;
+    clear qq;
+end
+
+
+handles.sp_time=-handles.WC.w_pre*handles.WC.int_factor+1:1:handles.WC.w_post*handles.WC.int_factor;
+handles.classtemp=q.classtemp;
+handles.tree=q.tree;
+handles.features=q.features;
+handles.feature_names=q.feature_names;
+
+%assign clusters as they were saved
+for i=1:handles.ncl, handles.classind{i}=find(q.cluster_class(:,1)==i)'; end
+%cluster zero
+handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
+clear q;
+
+load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
+us_idx=strfind(filename,'_');
+n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
+handles.channel=str2double(filename(us_idx(1)+3:us_idx(2)-1));
+block=whattofindwhere{handles.channel}{n_file}(1);
+us_idx=strfind(pathname,filesep);
+tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
+if ~exist(tens_fname,'file'),
+    handles.ts=[0 0];
+    handles.ts_time=[0 1];
+else
+    q=load(tens_fname);
+    handles.ts=double(q.data(1:round(10*handles.WC.sr)))*handles.WC.transform_factor;
+    handles.ts_time=(1:length(handles.ts))/handles.WC.sr;
+    clear q;
+    set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
+    wc_plot_raw(handles);
+end
+
+handles=wc_plot_temperature(handles);
+handles=wc_plot_spikes_and_ISI(handles);
+
+mainfolder=['Y:' filesep 'Data' filesep 'Sortcodes' filesep];
+set(handles.textStatus,'string',sprintf('%s',[pathname(numel(mainfolder)+1:end) handles.filename]));
+
+% Update handles structure
+guidata(handles.mainfig, handles);
+
+function savebutton_Callback(source,~)
+handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Saving %s',handles.filename));
+handles=guidata(get(source,'UserData'));
+handles=wc_plot_features_vs_features(handles);
+handles=guidata(get(source,'UserData'));
+handles=wc_plot_features_vs_time(handles);
+handles=wc_saveresults(handles);
+close(handles.htimecourse);
+close(handles.hfeatures)
+figure(handles.mainfig);
+set(handles.textStatus,'string',sprintf('Saved %s',handles.filename));
+
 
 function detailsbuttons_Callback(source,~)
 % Plot details of selected cluster, a new figure
@@ -130,7 +236,7 @@ function classifybutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
 if get(handles.hclassify,'value') == 1,
-    handles=wc_classifyrest(handles,2);
+    handles=wc_classifyrest(handles,1);
     set(handles.hclassify,'String','Classified');
 else
     for i=1:handles.ncl,
@@ -151,7 +257,7 @@ function tempmatchbutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
 
 if get(handles.htempmatch,'value') == 1,
-    handles=wc_classifyrest(handles,1);
+    handles=wc_classifyrest(handles,2);
     set(handles.htempmatch,'String','Matched');
 else
     for i=1:handles.ncl,
@@ -361,6 +467,7 @@ for i=1:numel(handles.hfuse)
         end
     end
 end
+to_fuse(to_fuse>numel(handles.classind))=[];
 if numel(to_fuse)>1
     f=min(to_fuse);
     if size(handles.WC.clus_per_temp,2)>=to_fuse(end)
@@ -454,104 +561,6 @@ function toread_Callback(source,eventdata)
 % handles=guidata(get(source,'UserData'));
 loadbutton_Callback(source, eventdata)
 
-function savebutton_Callback(source,~)
-handles=guidata(get(source,'UserData'));
-set(handles.textStatus,'string',sprintf('Saving %s',handles.filename));
-handles=guidata(get(source,'UserData'));
-handles=wc_plot_features_vs_features(handles);
-handles=guidata(get(source,'UserData'));
-handles=wc_plot_features_vs_time(handles);
-handles=wc_saveresults(handles);
-close(handles.htimecourse);
-close(handles.hfeatures)
-figure(handles.mainfig);
-set(handles.textStatus,'string',sprintf('Saved %s',handles.filename));
-
-function nextbutton_Callback(source,~)
-handles=guidata(get(source,'UserData'));
-
-timesfile=sprintf('%s.mat',handles.filename);
-allfiles=dir([handles.pathname filesep 'dataspikes*.mat']);
-allfiles={allfiles.name};
-idx=find(strcmp(allfiles,timesfile));
-
-%% this part is simply duplicated
-
-fileinvalid=1;
-while fileinvalid
-idx=mod(idx,numel(allfiles))+1;
-handles.filename=allfiles{idx}(1:end-4);
-
-filename=handles.filename;
-pathname=handles.pathname;
-handles=wc_clean_handles(handles);
-set(handles.textStatus,'string',sprintf('Loading %s',handles.filename),'fontsize',14);
-
-q=load(sprintf('%s.mat',[pathname filesep handles.filename]));
-
-idx=idx+1;
-if isfield(q,'features')
-    fileinvalid=0;
-end
-end
-
-handles.WC=q.par;
-handles.WC.thr = q.thr;
-handles.index=q.cluster_class(:,2);
-handles.nspk=length(handles.index);
-handles.ncl=max(q.cluster_class(:,1));
-handles.nfeatures=size(q.features,2);
-handles.min_clus=q.par.min_clus;
-if isfield(q.par,'temp'),handles.temp=q.par.temp; else handles.temp=0; end
-
-if isfield(q,'spikes')
-    handles.spikes=q.spikes;
-else
-    spikesfile=sprintf('spikes_%s.mat',handles.filename);
-    qq=load(spikesfile);
-    handles.spikes=qq.spikes;
-    clear qq;
-end
-
-
-handles.sp_time=-handles.WC.w_pre*handles.WC.int_factor+1:1:handles.WC.w_post*handles.WC.int_factor;
-handles.classtemp=q.classtemp;
-handles.tree=q.tree;
-handles.features=q.features;
-handles.feature_names=q.feature_names;
-
-%assign clusters as they were saved
-for i=1:handles.ncl, handles.classind{i}=find(q.cluster_class(:,1)==i)'; end
-%cluster zero
-handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
-clear q;
-
-load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
-us_idx=strfind(filename,'_');
-n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
-handles.channel=str2double(filename(us_idx(1)+3:us_idx(2)-1));
-block=whattofindwhere{handles.channel}{n_file}(1);
-us_idx=strfind(pathname,filesep);
-tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
-if ~exist(tens_fname,'file'),
-    handles.ts=[0 0];
-    handles.ts_time=[0 1];
-else
-    q=load(tens_fname);
-    handles.ts=double(q.data(1:round(10*handles.WC.sr)))*handles.WC.transform_factor;
-    handles.ts_time=(1:length(handles.ts))/handles.WC.sr;
-    clear q;
-    set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
-    wc_plot_raw(handles);
-end
-
-handles=wc_plot_temperature(handles);
-handles=wc_plot_spikes_and_ISI(handles);
-
-set(handles.textStatus,'string',sprintf('%s',handles.filename));
-
-% Update handles structure
-guidata(handles.mainfig, handles);
 
 
 

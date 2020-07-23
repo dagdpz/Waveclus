@@ -55,9 +55,9 @@ switch handles.WC.classify_method,
                 training=training(:,1:2:end);
             end
             if method==1
-                c = wc_classify7(sample, training,group);
-            elseif method==2
                 c = wc_classify(sample, training,group, handles.WC.classify_method);
+            elseif method==2
+                c = wc_classify7(sample, training,group);
             elseif method==3
                 c = wc_classify6(sample, training,group);
             elseif method==4
