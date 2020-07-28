@@ -17,25 +17,25 @@ name1=sprintf('%s-clustersb.jpg',fname);
 name2=sprintf('%s-clustersc.jpg',fname);
 
 print(handles.mainfig,'-djpeg',[handles.pathname filesep name]);
-if strcmp(get(handles.hsuppl,'Visible'),'on'), 
+if isvalid(handles.hsuppl) && strcmp(get(handles.hsuppl,'Visible'),'on'), 
     figure(handles.hsuppl);
         name=[handles.pathname filesep name1];
     print(gcf,'-djpeg',name);
 end
-if strcmp(get(handles.hsuppl2,'Visible'),'on'), 
+if isvalid(handles.hsuppl2) && strcmp(get(handles.hsuppl2,'Visible'),'on'), 
     figure(handles.hsuppl2);
         name=[handles.pathname filesep name2];
     print(gcf,'-djpeg',name);
 end
 
-if isfield(handles,'hfeatures'),
+if isfield(handles,'hfeatures') && isvalid(handles.hfeatures),
     if strcmp(get(handles.hfeatures,'Visible'),'on'), 
         figure(handles.hfeatures);
         name=[handles.pathname filesep fname '-features'];
         print(gcf,'-djpeg',name);
     end
 end
-if isfield(handles,'htimecourse'),
+if isfield(handles,'htimecourse') && isvalid(handles.htimecourse),
     if strcmp(get(handles.htimecourse,'Visible'),'on'), 
         figure(handles.htimecourse);
         name=[handles.pathname filesep fname '-timecourse'];

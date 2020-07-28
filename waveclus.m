@@ -8,6 +8,8 @@ handles.MINISI=[0.01:0.01:0.09 0.1:0.1:3 4:64 100:100:1000];
 handles.MAX_CLUS=15;
 handles.classify_space='features';
 handles.classify_method= 'linear';
+
+handles.datafolder=['Y:' filesep 'Data' filesep 'Sortcodes' filesep];
 clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.6 0 0; 0 0.6 0; 0 0 0.6; 0 0 0.6;0 0 0];
 set(0,'DefaultAxesColorOrder',clus_colors);
 handles.colors= clus_colors;
@@ -32,11 +34,11 @@ handles=wc_clean_handles(handles);
 % Update handles structure
 guidata(handles.mainfig, handles);
 handles=guidata(get(source,'UserData'));
-mainfolder=['Y:' filesep 'Data' filesep 'Sortcodes' filesep];
+
 if isfield(handles,'pathname')
    currentfolder=handles.pathname;
 else
-   currentfolder=mainfolder;
+   currentfolder=handles.datafolder;
 end
 if exist(currentfolder,'dir')
     [filename, pathname] = uigetfile('*spikes_ch*.mat','Select file',currentfolder);
@@ -59,7 +61,14 @@ end
 set(handles.textStatus,'string',sprintf('Loading %s',handles.filename),'fontsize',14);
 
 q=load(sprintf('%s.mat',[pathname filesep handles.filename]));
+handles=handles_from_data(handles,q);
 
+clear q;
+
+% Update handles structure
+guidata(handles.mainfig, handles);
+
+function handles=handles_from_data(handles,q)
 handles.WC=q.par;
 handles.WC.thr = q.thr;
 handles.index=q.cluster_class(:,2);
@@ -71,6 +80,7 @@ handles.nfeatures=size(q.features,2);
 handles.min_clus=q.par.min_clus;
 if isfield(q.par,'temp'),handles.temp=q.par.temp; else handles.temp=0; end
 
+%%???
 if isfield(q,'spikes')
     handles.spikes=q.spikes;
 else
@@ -91,8 +101,10 @@ handles.feature_names=q.feature_names;
 for i=1:handles.ncl, handles.classind{i}=find(q.cluster_class(:,1)==i)'; end
 %cluster zero
 handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
-clear q;
 
+
+filename= handles.filename;
+pathname=handles.pathname;
 load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
 us_idx=strfind(filename,'_');
 n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
@@ -114,10 +126,7 @@ end
 handles=wc_plot_temperature(handles);
 handles=wc_plot_spikes_and_ISI(handles);
 
-set(handles.textStatus,'string',sprintf('%s',[pathname(numel(mainfolder)+1:end) handles.filename]));
-
-% Update handles structure
-guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function nextbutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
@@ -127,81 +136,22 @@ allfiles=dir([handles.pathname filesep 'dataspikes*.mat']);
 allfiles={allfiles.name};
 idx=find(strcmp(allfiles,timesfile));
 
-%% this part is simply duplicated
-
 fileinvalid=1;
 while fileinvalid
 idx=mod(idx,numel(allfiles))+1;
 handles.filename=allfiles{idx}(1:end-4);
 
-filename=handles.filename;
-pathname=handles.pathname;
 handles=wc_clean_handles(handles);
 set(handles.textStatus,'string',sprintf('Loading %s',handles.filename),'fontsize',14);
 
-q=load(sprintf('%s.mat',[pathname filesep handles.filename]));
-
-idx=idx+1;
+q=load(sprintf('%s.mat',[handles.pathname filesep handles.filename]));
 if isfield(q,'features')
     fileinvalid=0;
 end
 end
 
-handles.WC=q.par;
-handles.WC.thr = q.thr;
-handles.index=q.cluster_class(:,2);
-handles.nspk=length(handles.index);
-handles.ncl=max(q.cluster_class(:,1));
-handles.nfeatures=size(q.features,2);
-handles.min_clus=q.par.min_clus;
-if isfield(q.par,'temp'),handles.temp=q.par.temp; else handles.temp=0; end
-
-if isfield(q,'spikes')
-    handles.spikes=q.spikes;
-else
-    spikesfile=sprintf('spikes_%s.mat',handles.filename);
-    qq=load(spikesfile);
-    handles.spikes=qq.spikes;
-    clear qq;
-end
-
-
-handles.sp_time=-handles.WC.w_pre*handles.WC.int_factor+1:1:handles.WC.w_post*handles.WC.int_factor;
-handles.classtemp=q.classtemp;
-handles.tree=q.tree;
-handles.features=q.features;
-handles.feature_names=q.feature_names;
-
-%assign clusters as they were saved
-for i=1:handles.ncl, handles.classind{i}=find(q.cluster_class(:,1)==i)'; end
-%cluster zero
-handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
+handles=handles_from_data(handles,q);
 clear q;
-
-load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
-us_idx=strfind(filename,'_');
-n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
-handles.channel=str2double(filename(us_idx(1)+3:us_idx(2)-1));
-block=whattofindwhere{handles.channel}{n_file}(1);
-us_idx=strfind(pathname,filesep);
-tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
-if ~exist(tens_fname,'file'),
-    handles.ts=[0 0];
-    handles.ts_time=[0 1];
-else
-    q=load(tens_fname);
-    handles.ts=double(q.data(1:round(10*handles.WC.sr)))*handles.WC.transform_factor;
-    handles.ts_time=(1:length(handles.ts))/handles.WC.sr;
-    clear q;
-    set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
-    wc_plot_raw(handles);
-end
-
-handles=wc_plot_temperature(handles);
-handles=wc_plot_spikes_and_ISI(handles);
-
-mainfolder=['Y:' filesep 'Data' filesep 'Sortcodes' filesep];
-set(handles.textStatus,'string',sprintf('%s',[pathname(numel(mainfolder)+1:end) handles.filename]));
 
 % Update handles structure
 guidata(handles.mainfig, handles);
@@ -234,18 +184,20 @@ guidata(handles.mainfig, handles);
 
 function classifybutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
+do_or_undo=get(source,'Value');
+accept_classification(handles);
 
-if get(handles.hclassify,'value') == 1,
-    handles=wc_classifyrest(handles,1);
-    set(handles.hclassify,'String','Classified');
+if do_or_undo == 1,
+    mathod=get_classify_version_from_tag(source);
+    handles=wc_classifyrest(handles,mathod);
+    set(source,'String','Undo');
+    set(source,'Value',1);
 else
     for i=1:handles.ncl,
-        if ~handles.fixed(i), 
-            handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]);
-        else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
+        if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
     end
     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    set(handles.hclassify,'String','Classify');
+    %set(handles.hclassify,'String','Classify');
 end
 
 handles=wc_plot_spikes_and_ISI(handles);
@@ -253,83 +205,72 @@ if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
-function tempmatchbutton_Callback(source, ~)
-handles=guidata(get(source,'UserData'));
+% function tempmatchbutton_Callback(source, ~)
+% handles=guidata(get(source,'UserData'));
+% do_or_undo=get(source,'Value');
+% accept_classification(handles);
+% 
+% if do_or_undo == 1,
+%     handles=wc_classifyrest(handles,2);
+%     set(handles.htempmatch,'String','Matched');
+% else
+%     for i=1:handles.ncl,
+%         if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
+%     end
+%     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
+%     %set(handles.htempmatch,'String','Near');
+% end
+% 
+% handles=wc_plot_spikes_and_ISI(handles);
+% if ~all(handles.ts==0), wc_plot_raw(handles); end
+% % Update handles structure
+% guidata(handles.mainfig, handles);
+% 
+% function tempmatchbutton2_Callback(source, ~)
+% handles=guidata(get(source,'UserData'));
+% do_or_undo=get(source,'Value');
+% accept_classification(handles);
+% 
+% if do_or_undo == 1,
+%     handles=wc_classifyrest(handles,3);
+%     set(handles.htempmatch2,'String','Matched');
+% else
+%     for i=1:handles.ncl,
+%         if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
+%     end
+%     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
+%     %set(handles.htempmatch2,'String','Near T');
+% end
+% 
+% handles=wc_plot_spikes_and_ISI(handles);
+% if ~all(handles.ts==0), wc_plot_raw(handles); end
+% % Update handles structure
+% guidata(handles.mainfig, handles);
+% 
+% function tempmatchbutton3_Callback(source, ~)
+% handles=guidata(get(source,'UserData'));
+% do_or_undo=get(source,'Value');
+% accept_classification(handles);
+% 
+% if do_or_undo,
+%     handles=wc_classifyrest(handles,4);
+%     set(handles.htempmatch3,'String','Matched');
+% else
+%     for i=1:handles.ncl,
+%         if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
+%     end
+%     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
+%    % set(handles.htempmatch3,'String','NearT1');
+% end
+% 
+% handles=wc_plot_spikes_and_ISI(handles);
+% if ~all(handles.ts==0), wc_plot_raw(handles); end
+% % Update handles structure
+% guidata(handles.mainfig, handles);
 
-if get(handles.htempmatch,'value') == 1,
-    handles=wc_classifyrest(handles,2);
-    set(handles.htempmatch,'String','Matched');
-else
-    for i=1:handles.ncl,
-        if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]);
-        else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
-    end
-    handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    set(handles.htempmatch,'String','Near');
-end
-
-handles=wc_plot_spikes_and_ISI(handles);
-if ~all(handles.ts==0), wc_plot_raw(handles); end
-% Update handles structure
-guidata(handles.mainfig, handles);
-
-function tempmatchbutton2_Callback(source, ~)
-handles=guidata(get(source,'UserData'));
-
-if get(handles.htempmatch2,'value') == 1,
-    handles=wc_classifyrest(handles,3);
-    set(handles.htempmatch2,'String','Matched');
-else
-    for i=1:handles.ncl,
-        if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]);
-        else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
-    end
-    handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    set(handles.htempmatch2,'String','Near T');
-end
-
-handles=wc_plot_spikes_and_ISI(handles);
-if ~all(handles.ts==0), wc_plot_raw(handles); end
-% Update handles structure
-guidata(handles.mainfig, handles);
-
-
-function tempmatchbutton3_Callback(source, ~)
-handles=guidata(get(source,'UserData'));
-
-if get(handles.htempmatch3,'value') == 1,
-    handles=wc_classifyrest(handles,4);
-    set(handles.htempmatch3,'String','Matched');
-else
-    for i=1:handles.ncl,
-        if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]);
-        else handles.fixed(i)=0; set(handles.hfix(i),'Value',0); end
-    end
-    handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-    set(handles.htempmatch3,'String','NearT1');
-end
-
-handles=wc_plot_spikes_and_ISI(handles);
-if ~all(handles.ts==0), wc_plot_raw(handles); end
-% Update handles structure
-guidata(handles.mainfig, handles);
-
-function changetempbutton_Callback(source, ~)
-[temp min_clus buttn]= ginput(1);                  %gets the mouse input
-if buttn==3
-    return;
-end
-handles=guidata(get(source,'UserData'));
-temp = round(temp)+1;
-if temp < 1; temp=1;end                 %temp should be within the limits
-if temp > handles.WC.num_temp; temp=handles.WC.num_temp; end
-min_clus = round(min_clus);
-handles.hhor=handles.hhor(1);
-set(handles.hhor,'ydata',[min_clus min_clus]);
-set(handles.hver,'xdata',[temp-1 temp-1]);
-
-%reset forced
-%handles.forced(find(handles.forced))=0;
+function accept_classification(handles)
+%handles=guidata(get(source,'UserData'));
+    
 set(handles.hclassify,'String','Classify');
 set(handles.hclassify,'Value',0);
 set(handles.htempmatch,'String','Near');
@@ -338,34 +279,75 @@ set(handles.htempmatch2,'String','NearT');
 set(handles.htempmatch2,'Value',0);
 set(handles.htempmatch3,'String','NearT1');
 set(handles.htempmatch3,'Value',0);
+guidata(handles.mainfig, handles);
 
-handles.classind={};
-handles.temp=temp;
-handles.min_clus=min_clus;
+
+function mathod=get_classify_version_from_tag(source)
+tag=get(source,'Tag');
+switch tag
+    case 'classify'
+        mathod=1;
+    case 'Near'
+        mathod=2;
+    case 'Near T'
+        mathod=3;
+    case 'NearT1'
+        mathod=4;
+end
+
+function changetempbutton_Callback(source, ~)
+handles=guidata(get(source,'UserData'));
+
+%% Get the mouse input
+[temp, min_clus, buttn]= ginput(1);                  
+if buttn==3
+    return;
+end
+temp = round(temp)+1;
+if temp < 1; temp=1;end                 %temp should be discrete and within the limits
+if temp > handles.WC.num_temp; temp=handles.WC.num_temp; end
+min_clus = round(min_clus);
+handles.temp        =temp;
+handles.min_clus    =min_clus;
+handles.hhor        =handles.hhor(1);
+handles.classind    ={};
+set(handles.hhor,'ydata',[min_clus min_clus]);
+set(handles.hver,'xdata',[temp-1 temp-1]);
+% 
+% %reset classify buttons
+% set(handles.hclassify,'String','Classify');
+% set(handles.hclassify,'Value',0);
+% set(handles.htempmatch,'String','Near');
+% set(handles.htempmatch,'Value',0);
+% set(handles.htempmatch2,'String','NearT');
+% set(handles.htempmatch2,'Value',0);
+% set(handles.htempmatch3,'String','NearT1');
+% set(handles.htempmatch3,'Value',0);
+
+%% Treat fixed : Limit to only valid clusters
+%handles.fixed   =handles.fixed(1:handles.ncl);
+%handles.hcol    =handles.hcol(1:handles.ncl);
 
 fixed=find(handles.fixed);%all fixed clusters
 nfixed=length(fixed);
 fixed_classind_all=[handles.fixed_classind{fixed}];%all spike indices in fixed cluster
-% 
-% set(handles.hfix(fixed),'Value',0);
-% handles.fixed(fixed)=0;
-
-tree=handles.tree;
-toplot=find(tree(temp,5:end-1)>=min_clus);%find clusters which are big enough to plot (-1 temporary debug)
 
 
-fixed_temps=handles.WC.clus_per_temp(:,fixed(fixed<=size(handles.WC.clus_per_temp,2)));
+%deleting all unit markers from temperature plot
 for c=1:numel(handles.hcol)
     delete(handles.hcol(c));
 end
 handles.hcol=[];
 
+%% get new clusters
+tree=handles.tree;
+toplot=find(tree(temp,5:end-1)>=min_clus);%find clusters which are big enough to plot (-1 temporary debug)
+
 nnewclust=0;
 new_temps=[];
 for i=1:length(toplot),
-    t=handles.classtemp{temp,toplot(i)};
-    %remove spikes which belong to fixed clusters
-    t=setdiff(t,fixed_classind_all);
+    t=handles.classtemp{temp,toplot(i)};    
+    t=setdiff(t,fixed_classind_all); %remove spikes which belong to fixed clusters
     if ~isempty(t),
         nnewclust=nnewclust+1;
         handles.classind{nnewclust}=t;
@@ -373,8 +355,11 @@ for i=1:length(toplot),
     end
 end
 
+% cluster markers
+fixed_temps=handles.WC.clus_per_temp(:,fixed(fixed<=size(handles.WC.clus_per_temp,2))); %fixed shouldnt be bigger than number of units with marker though
 handles.WC.clus_per_temp=[new_temps fixed_temps];
 
+%% draw vertical line and cluster markers
 handles.hcol=[];
 colidx=1;
 for c=1:size(handles.WC.clus_per_temp,2)
@@ -386,12 +371,13 @@ for c=1:size(handles.WC.clus_per_temp,2)
     colidx=colidx+1;
 end
 
+% put fixed clusters to the end of all clusters
+% arrange the fix checkbox
 handles.ncl=nfixed+nnewclust;
-for i=1:numel(handles.fixed)
+for i=1:nnewclust
     set(handles.hfix(i),'Value',0);
     handles.fixed(i)=0;
 end
-% put fixed clusters to the end of all clusters
 for i=nnewclust+1:handles.ncl,
     j=i-nnewclust;
     handles.classind{i}=handles.fixed_classind{fixed(j)};
@@ -399,35 +385,29 @@ for i=nnewclust+1:handles.ncl,
     set(handles.hfix(i),'Value',1);
     handles.fixed(i)=1;
 end
+%cluster zero
+handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
+
+% dont think we need this
 for i=nnewclust+1:handles.ncl,
     handles.fixed_classind{i}=handles.classind{i};
 end
 
-%cluster zero
-handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
 handles=wc_plot_spikes_and_ISI(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
 guidata(handles.mainfig, handles);
 
 function rejectbuttons_Callback(source,~)
-% Reject cluster
+handles=guidata(get(source,'UserData'));
+% Reject cluster i
 tag=get(source,'Tag');
 i=str2double(tag(7:end));
-handles=guidata(get(source,'UserData'));
+
 if size(handles.WC.clus_per_temp,2)>=i %% temporary debug Flaff 20160617 ch3-2-su
 handles.WC.clus_per_temp(:,i)=[];
 end
-%reset forced
-%handles.forced(find(handles.forced))=0;
-set(handles.hclassify,'String','Classify');
-set(handles.hclassify,'Value',0);
-set(handles.htempmatch,'String','Near');
-set(handles.htempmatch,'Value',0);
-set(handles.htempmatch2,'String','NearT');
-set(handles.htempmatch2,'Value',0);
-set(handles.htempmatch3,'String','NearT1');
-set(handles.htempmatch3,'Value',0);
 
+%% Move the fix and fuse checkbox information along
 if find(handles.fixed),
     handles.fixed(i:end-1)=handles.fixed(i+1:end);
     handles.fixed(end)=0;
@@ -440,24 +420,26 @@ if find(handles.fixed),
     set(handles.hfix(end),'Value',0);
     set(handles.hfuse(end),'Value',0);
 end
+
+%% Either create unsorted cluster or add to existing unsorted cluster
 if numel(handles.classind)>handles.ncl
     handles.classind{end}=[handles.classind{end} handles.classind{i}];
 else
     handles.classind{end +1}=handles.classind{i};
 end
 handles.classind=handles.classind(setdiff(1:length(handles.classind),i));
+handles.classind_unforced{i}=[];
 
 handles.ncl=handles.ncl-1;
 handles.rejected=i;
 handles=wc_plot_spikes_and_ISI(handles);
 handles=wc_plot_temperature(handles);
 handles.rejected=1;
-if ~all(handles.ts==0), wc_plot_raw(handles); end
-% Update handles structure
+
 guidata(handles.mainfig, handles);
 
 function fusebutton_Callback(source,~)
-% Reject cluster
+% Fuse selected clusters cluster
 handles=guidata(get(source,'UserData'));
 to_fuse=[];
 for i=1:numel(handles.hfuse)
@@ -479,27 +461,30 @@ if numel(to_fuse)>1
         to_fuse=to_fuse(to_fuse~=f);
         handles.WC.clus_per_temp(:,to_fuse(1:end-1))=[];
     end
-    already_fused=0;
+    already_fused=0; %keep track of number of shifts
     M=numel(handles.classind{f});
-    largest_cluster=f;
+    largest_cluster=f; 
     for i=to_fuse
         i=i-already_fused;
         n=numel(handles.classind{i});
-        handles.classind{f}=[handles.classind{f} handles.classind{i}];
-        handles.classind=handles.classind(1:length(handles.classind)~=i);
+        handles.classind{f}         =[handles.classind{f} handles.classind{i}];
+        handles.classind            =handles.classind(1:length(handles.classind)~=i);
+        handles.classind_unforced{f}=[handles.classind_unforced{f} handles.classind_unforced{i}];        
+        handles.classind_unforced   =handles.classind_unforced(1:length(handles.classind_unforced)~=i);
         handles.fixed_classind=handles.fixed_classind(1:length(handles.fixed_classind)~=i);
         handles.fixed_classind{end+1}=[];
+        %shift fix checkbox values
         for j=i:numel(handles.fixed)-1
             handles.fixed(j)=handles.fixed(j+1);
             set(handles.hfix(j),'Value',get(handles.hfix(j+1),'Value'));
         end
+        % to keep cluster markers for the largest of fused clusters
         if n>M
             largest_cluster=i+already_fused;
             M=n;
         end
         already_fused=already_fused+1;
-    end
-    
+    end    
     handles.WC.clus_per_temp(:,f)=clustemp(:,[f to_fuse]==largest_cluster);
     n_fused=numel(to_fuse);
     handles.fixed(end-n_fused+1:end)=0;
@@ -513,26 +498,18 @@ for i=1:numel(handles.hfuse)
     set(handles.hfuse(i),'Value',0);
 end
 
-%reset forced
-%handles.forced(find(handles.forced))=0;
-set(handles.hclassify,'String','Classify');
-set(handles.hclassify,'Value',0);
-set(handles.htempmatch,'String','Near');
-set(handles.htempmatch,'Value',0);
-set(handles.htempmatch2,'String','Near T');
-set(handles.htempmatch2,'Value',0);
-set(handles.htempmatch3,'String','NearT1');
-set(handles.htempmatch3,'Value',0);
 handles=wc_plot_spikes_and_ISI(handles);
 handles=wc_plot_temperature(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
+function fusebuttons_Callback(source,~)
+
 function fixbuttons_Callback(source,~)
+handles=guidata(get(source,'UserData'));
 tag=get(source,'Tag');
 i=str2double(tag(4:end));
-handles=guidata(get(source,'UserData'));
 switch get(source,'value');
     case 1, handles.fixed(i)=1;handles.fixed_classind{i}=handles.classind{i};
     case 0, handles.fixed(i)=0;handles.fixed_classind{i}=[];
@@ -540,7 +517,15 @@ end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
-function fusebuttons_Callback(source,~)
+function restclusterbutton_Callback(source,~)
+handles=guidata(get(source,'UserData'));
+handles.ncl=numel(handles.classind);
+handles.classind_unforced{end+1}=handles.classind_unforced{end}; %% end has to be the new cluster, end+1 has to be the rest from not sorted
+handles.classind_unforced{end-1}=[];
+handles.classind{end+1}=[]; 
+handles=wc_plot_spikes_and_ISI(handles);
+handles.WC.clus_per_temp=[handles.WC.clus_per_temp [2;2]];
+guidata(handles.mainfig, handles);
 
 function plotfeaturesbutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
@@ -567,20 +552,6 @@ loadbutton_Callback(source, eventdata)
 %append only changed variables, classind, handles (temp, min_clus),
 %unforced version?
 
-function restclusterbutton_Callback(source,~)
-handles=guidata(get(source,'UserData'));
-% eval('delete(handles.hfeatures)','');
-% eval('delete(handles.hsuppl)','');
-% eval('delete(handles.hsuppl2)','');
-% eval('delete(handles.hdetailsfig)','');
-% eval('delete(handles.mainfig)','');
-handles.ncl=numel(handles.classind);
-handles.classind_unforced{end+1}=handles.classind_unforced{end}; %% end has to be the new cluster, end+1 has to be the rest from not sorted
-handles.classind_unforced{end-1}=[];
-handles.classind{end+1}=[]; 
-handles=wc_plot_spikes_and_ISI(handles);
-handles.WC.clus_per_temp=[[1;1] handles.WC.clus_per_temp];
-guidata(handles.mainfig, handles);
 
 function handles=create_mainfig(handles)
 handles.isaGUI=1;
@@ -638,17 +609,17 @@ handles.htempmatch=uicontrol('units','normalized','Style','togglebutton','String
     'Tag','Near',...
     'UserData',handles.mainfig,...
     'Position',[stepx+0.03 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
-    'Callback',{@tempmatchbutton_Callback});
+    'Callback',{@classifybutton_Callback});
 handles.htempmatch2=uicontrol('units','normalized','Style','togglebutton','String','Near T','FontSize',12,...
     'Tag','Near T',...
     'UserData',handles.mainfig,...
     'Position',[stepx+0.06 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
-    'Callback',{@tempmatchbutton2_Callback});
+    'Callback',{@classifybutton_Callback});
 handles.htempmatch3=uicontrol('units','normalized','Style','togglebutton','String','NearT1','FontSize',12,...
     'Tag','NearT1',...
     'UserData',handles.mainfig,...
     'Position',[stepx+0.09 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
-    'Callback',{@tempmatchbutton3_Callback});
+    'Callback',{@classifybutton_Callback});
 handles.hfuseclusters=uicontrol('units','normalized','Style','togglebutton','String','Fuse','FontSize',12,...
     'Tag','fuse',...
     'UserData',handles.mainfig,...
@@ -717,12 +688,21 @@ for r=2:nrow
     end
 end
 
+function close_or_make_invisible(source, ~)
+handles=guidata(get(source,'UserData'));
+if isvalid(handles.mainfig)
+    set(source,'visible','off');
+else
+    close(source);
+end
+guidata(handles.mainfig, handles);
+
 function handles=create_supplfig(handles)
 
 handles.hsuppl = figure('Visible','Off','Units','Normalized','Position',[0 0 1 0.9],...
     'Name','More clusters','NumberTitle','off',...
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...
-    'Tag','Supplfig');
+    'Tag','Supplfig','CloseRequestFcn','close_or_make_invisible');
 nrow=4;ncol=5;
 stepx=0.02; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.05; hight=(1-(nrow+1)*stepy)/nrow;
@@ -765,7 +745,7 @@ function handles=create_supplfig2(handles)
 handles.hsuppl2 = figure('Visible','Off','Units','Normalized','Position',[0 0 1 0.9],...
     'Name','More clusters','NumberTitle','off',...
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...
-    'Tag','Supplfig');
+    'Tag','Supplfig','CloseRequestFcn','close_or_make_invisible');
 nrow=4;ncol=5;
 stepx=0.02; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.05; hight=(1-(nrow+1)*stepy)/nrow;

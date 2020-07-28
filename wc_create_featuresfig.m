@@ -25,22 +25,49 @@ ncol=ceil(sqrt(np));
 
 stepx=0.01; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.01; hight=(1-(nrow+1)*stepy)/nrow;
+    mnx=prctile(handles.features(:,2),0.1);
+    mxx=prctile(handles.features(:,2),99.9);
+    mny=prctile(handles.features(:,2),0.1);
+    mxy=prctile(handles.features(:,2),99.9);
+%     
+%     mnx=mnx-abs(mnx)*0.1;
+%     mxx=mxx+abs(mxx)*0.1;
+%     mny=mny-abs(mny)*0.1;
+%     mxy=mxy+abs(mxy)*0.1;
+    
+k=1;
+        handles.hfaxes(1)=axes('position',[stepx+(width+stepx)*mod(k-1,ncol) 1-(stepy+hight)*(ceil(k/ncol)) width hight],...
+            'Tag',sprintf('changelater%d',k),...
+            'xtick',[],'ytick',[],'xlim',[mnx mxx],'ylim',[mny mxy],...
+            'Parent',handles.hfeatures,'ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
+        h=title(sprintf('histogram feature: %s',handles.feature_names{2}));
+        set(h,'Units','Normalized','Position',[0.01 .01 0],'verticalalignment','bottom','horizontalalignment','left',...
+            'Parent',handles.hfaxes(k));
+        box on
 k=2;
 for i=2 %:nf,
-    for j=i+1:nf,
+    for j=i:nf,
     mnx=prctile(handles.features(:,i),0.1);
     mxx=prctile(handles.features(:,i),99.9);
     mny=prctile(handles.features(:,j),0.1);
     mxy=prctile(handles.features(:,j),99.9);
+    mnx=mnx-abs(mnx)*0.1;
+    mxx=mxx+abs(mxx)*0.1;
+    mny=mny-abs(mny)*0.1;
+    mxy=mxy+abs(mxy)*0.1;
 %         mnx=min(min(handles.features(:,i)));
 %         mny=min(min(handles.features(:,j)));
 %         mxx=max(max(handles.features(:,i)));
 %         mxy=max(max(handles.features(:,j)));
         handles.hfaxes(k)=axes('position',[stepx+(width+stepx)*mod(k-1,ncol) 1-(stepy+hight)*(ceil(k/ncol)) width hight],...
             'Tag',sprintf('changelater%d',k),...
-            'xtick',[],'ytick',[],'xlim',[mnx mxx]*1.1,'ylim',[mny mxy]*1.1,...
+            'xtick',[],'ytick',[],'xlim',[mnx mxx],'ylim',[mny mxy],...
             'Parent',handles.hfeatures,'ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
+        if j==i
+        h=title(sprintf('histogram feature: %s',handles.feature_names{i+1}));
+        else
         h=title(sprintf('%s vs %s',handles.feature_names{j},handles.feature_names{i}));
+        end
         set(h,'Units','Normalized','Position',[0.01 .01 0],'verticalalignment','bottom','horizontalalignment','left',...
             'Parent',handles.hfaxes(k));
         box on

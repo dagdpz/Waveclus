@@ -2,8 +2,9 @@ function handles=wc_plot_spikes_many_clusters(handles,clusterstoplot,ax)
 % plots spike shapes for several clusters
 MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT; %to prevent large plottings
 %define limits
-clusterstoplot(clusterstoplot==0)=sum(~cellfun(@isempty,handles.classind));
-t=handles.spikes([handles.classind{clusterstoplot}],:);
+%clusterstoplot(clusterstoplot==0)=sum(~cellfun(@isempty,handles.classind));
+clusterstoplot(clusterstoplot==0)=numel(handles.classind);
+%t=handles.spikes([handles.classind{clusterstoplot}],:);
 toplot=1;
 
 cla(ax);

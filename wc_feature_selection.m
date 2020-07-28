@@ -118,7 +118,7 @@ end
 
 %% to always keep pca 1,2,3 and time
 if strfind(feature,'pca')
-    ix=ismember(fn,{'PCA,1','PCA,2','PCA,3'});    
+    ix=ismember(fnall,{'PCA,1','PCA,2','PCA,3'});    
     sd(ix)=max(sd)+sd(ix);
 end
 if strfind(feature,'time')
