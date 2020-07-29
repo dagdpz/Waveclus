@@ -1,6 +1,6 @@
 function handles=wc_plot_features_vs_features(handles)
 MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT*5; %to prevent large plottings
-if ~isfield('hfeatures',handles),
+if ~isfield(handles,'hfeatures') || ~isvalid(handles.hfeatures),
     if ~isempty(handles.features),
         handles=wc_create_featuresfig(handles);
         % Update handles structure

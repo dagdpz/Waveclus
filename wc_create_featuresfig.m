@@ -1,22 +1,16 @@
 function handles=wc_create_featuresfig(handles)
 
-% if isfield(handles,'hfeatures') && isobject(handles.hfeatures),
-%     figure(handles.hfeatures);clf;
-% else
-    if ishandle(handles.mainfig)
-        handles.hfeatures=figure('Visible','On','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...
-            'Name','Features','NumberTitle','off','Color','w',...
-            'UserData',handles.mainfig,...
-            'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...%            'CloseRequestFcn',{@closefeatures_callback},...
-            'Tag','Features');
-    else %no gui opend
+
+if ishandle(handles.mainfig) && isfield(handles,'hfeatures') && isvalid(handles.hfeatures) %gui open, timecoursefigurehandle exists and figure is there
+    figure(handles.hfeatures);clf;
+else
         handles.hfeatures=figure('Visible','On','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...
             'Name','Features','NumberTitle','off','Color','w',...
             'UserData',handles.mainfig,...
             'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...
             'Tag','Features');
-    end
-%end
+end
+
 
 nf=handles.nfeatures;
 np=nf;%*(nf-1)/2;
