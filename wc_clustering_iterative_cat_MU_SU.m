@@ -157,7 +157,7 @@ for k =  1 : numel(thresholds)
             handles.nfeatures=size(handles.features,2);
             set(0,'DefaultAxesColorOrder',clus_colors);
             handles.colors= clus_colors;
-            handles.mainfig=[];
+            handles.mainfig=99;
             handles=wc_plot_features_vs_time(handles);
             print(handles.htimecourse,[handles.bname '-' channelfile '_' thresholds{k} '-timecourse'],'-djpeg');
             close (handles.htimecourse)
@@ -168,7 +168,7 @@ for k =  1 : numel(thresholds)
             handles.nfeatures=size(handles.features,2);
             set(0,'DefaultAxesColorOrder',clus_colors);
             handles.colors= clus_colors;
-            handles.mainfig=[];
+            handles.mainfig=99;
             handles=wc_plot_features_vs_features(handles);
             print(handles.hfeatures,[handles.bname '-' channelfile '_' thresholds{k} '-features'],'-djpeg');
             close (handles.hfeatures)
