@@ -22,16 +22,16 @@ cla(handles.axesAllClusters);
 cla(handles.axesClust0);
 %cla(handles.axesISI0);
 set(handles.hclassify,'Value',0);
-set(handles.hclassify,'String','Classify');
+set(handles.hclassify,'String','Class T');
 %-------
 set(handles.htempmatch,'Value',0);
-set(handles.htempmatch,'String','Near');
+set(handles.htempmatch,'String','Classify');
 %-------
 set(handles.htempmatch2,'Value',0);
-set(handles.htempmatch2,'String','Near T');
+set(handles.htempmatch2,'String','Near');
 %-------
 set(handles.htempmatch3,'Value',0);
-set(handles.htempmatch3,'String','NearT1');
+set(handles.htempmatch3,'String','NearT');
 
 
 %-------

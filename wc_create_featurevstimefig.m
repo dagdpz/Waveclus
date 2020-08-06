@@ -1,7 +1,4 @@
 function handles=wc_create_featurevstimefig(handles)
-% if isfield(handles,'htimecourse'),
-%     figure(handles.htimecourse);clf;
-% else
 if ishandle(handles.mainfig) && isfield(handles,'htimecourse') && isvalid(handles.htimecourse) %gui open, timecoursefigurehandle exists and figure is there
     figure(handles.htimecourse);clf;
 else
@@ -10,21 +7,7 @@ else
         'UserData',handles.mainfig,...
         'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...
         'Tag','Features');
-    %
-    %         handles.htimecourse=figure('Visible','Off','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...
-    %             'Name','Features vs time','NumberTitle','off','Color','w',...
-    %             'UserData',handles.mainfig,...
-    %             'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...%            'CloseRequestFcn',{@closefeatures_callback},...
-    %             'Tag','Features');
 end
-% else
-%     handles.htimecourse=figure('Visible','Off','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...
-%         'Name','Features vs time','NumberTitle','off','Color','w',...
-%         'UserData',handles.mainfig,...
-%         'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1600 1080],...
-%         'Tag','Features');
-%end
-% end
 
 nf=handles.nfeatures;
 nrow=ceil(sqrt(nf));
@@ -47,14 +30,7 @@ for i=1:nf,
     box on
 end
 
-
-% function closefeatures_callback(source,eventdata)
-% %does not really close, makes it invisible
-% handles=guidata(get(source,'UserData'));
-% set(handles.htimecourse,'Visible','Off');
-% set(handles.mainfig,'Visible','On');
-
-function copy_to_new_window(source,event);
+function copy_to_new_window(source,event)
 figure(100);
 cla;
 copyobj(get(source,'children'),gca);

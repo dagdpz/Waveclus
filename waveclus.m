@@ -188,8 +188,8 @@ do_or_undo=get(source,'Value');
 accept_classification(handles);
 
 if do_or_undo == 1,
-    mathod=get_classify_version_from_tag(source);
-    handles=wc_classifyrest(handles,mathod);
+    method=get_classify_version_from_tag(source);
+    handles=wc_classifyrest(handles,method);
     set(source,'String','Undo');
     set(source,'Value',1);
 else
@@ -271,28 +271,28 @@ guidata(handles.mainfig, handles);
 function accept_classification(handles)
 %handles=guidata(get(source,'UserData'));
     
-set(handles.hclassify,'String','Classify');
+set(handles.hclassify,'String','Class T');
 set(handles.hclassify,'Value',0);
-set(handles.htempmatch,'String','Near');
+set(handles.htempmatch,'String','Classify');
 set(handles.htempmatch,'Value',0);
-set(handles.htempmatch2,'String','NearT');
+set(handles.htempmatch2,'String','Near');
 set(handles.htempmatch2,'Value',0);
-set(handles.htempmatch3,'String','NearT1');
+set(handles.htempmatch3,'String','NearT');
 set(handles.htempmatch3,'Value',0);
 guidata(handles.mainfig, handles);
 
 
-function mathod=get_classify_version_from_tag(source)
+function method=get_classify_version_from_tag(source)
 tag=get(source,'Tag');
 switch tag
-    case 'classify'
-        mathod=1;
+    case 'Class T'
+        method=1;
+    case 'Classify'
+        method=2;
     case 'Near'
-        mathod=2;
-    case 'Near T'
-        mathod=3;
-    case 'NearT1'
-        mathod=4;
+        method=3;
+    case 'NearT'
+        method=4;
 end
 
 function changetempbutton_Callback(source, ~)
@@ -600,23 +600,23 @@ handles.axesAllClusters=axes('position',[stepx 1-(stepy+hight)*( 2 ) width hight
     'Tag','AllClusters','ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
 handles.axesClust0=axes('position',[stepx+(width+stepx)*0 1-(stepy+hight)*( nrow ) width hight],...
     'Tag','Clust0','ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
-handles.hclassify=uicontrol('units','normalized','Style','togglebutton','String','Classify','FontSize',12,...
-    'Tag','classify',...
+handles.hclassify=uicontrol('units','normalized','Style','togglebutton','String','Class T','FontSize',12,...
+    'Tag','Class T',...
     'UserData',handles.mainfig,...
     'Position',[stepx-0.01  1-(stepy+hight)*( nrow )-stepy*0.9 0.04 0.035],...
     'Callback',{@classifybutton_Callback});
-handles.htempmatch=uicontrol('units','normalized','Style','togglebutton','String','Near','FontSize',12,...
-    'Tag','Near',...
+handles.htempmatch=uicontrol('units','normalized','Style','togglebutton','String','Classify','FontSize',12,...
+    'Tag','Classify',...
     'UserData',handles.mainfig,...
     'Position',[stepx+0.03 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
     'Callback',{@classifybutton_Callback});
-handles.htempmatch2=uicontrol('units','normalized','Style','togglebutton','String','Near T','FontSize',12,...
-    'Tag','Near T',...
+handles.htempmatch2=uicontrol('units','normalized','Style','togglebutton','String','Near','FontSize',12,...
+    'Tag','Near',...
     'UserData',handles.mainfig,...
     'Position',[stepx+0.06 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
     'Callback',{@classifybutton_Callback});
-handles.htempmatch3=uicontrol('units','normalized','Style','togglebutton','String','NearT1','FontSize',12,...
-    'Tag','NearT1',...
+handles.htempmatch3=uicontrol('units','normalized','Style','togglebutton','String','Near T','FontSize',12,...
+    'Tag','NearT',...
     'UserData',handles.mainfig,...
     'Position',[stepx+0.09 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
     'Callback',{@classifybutton_Callback});

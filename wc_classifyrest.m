@@ -57,9 +57,9 @@ switch handles.WC.classify_method,
             if method==1
                 c = wc_classify(sample, training,group, handles.WC.classify_method);
             elseif method==2
-                c = wc_classify7(sample, training,group);
+                c = wc_classify(sample(:,2:end), training(:,2:end),group, handles.WC.classify_method);
             elseif method==3
-                c = wc_classify6(sample, training,group);
+                c = wc_classify7(sample, training,group);
             elseif method==4
                 c = wc_classify8(sample, training,group);
 %                 for feat=1:size(training,2) 

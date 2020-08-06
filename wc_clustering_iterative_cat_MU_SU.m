@@ -188,7 +188,6 @@ for k =  1 : numel(thresholds)
             if print2file==0;
                 print
             else
-                %eval(sprintf('print -djpeg fig2print_%s-%d',handles.bname,channelfile));
                 print(handles.mainfig,[handles.bname '-' channelfile '_' thresholds{k} '-clusters'],'-djpeg');
                 close(handles.mainfig);
             end
