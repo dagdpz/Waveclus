@@ -18,9 +18,10 @@ toplotind = [];
 colind = [];
 zeroind = max(interv);
 
-%used to plot lines between blocks
-load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel','sr','channels_to_process');
-% create error when creating WC files
+if ~isfield(handles,'blocksamplesperchannel') % During
+    load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel');
+    handles.blocksamplesperchannel = blocksamplesperchannel;
+end
 
 for k=interv
     max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
@@ -87,16 +88,16 @@ for i=2:nf
         drawnow
     end
     %draw horizontal lines between blocks
-    if size(blocksamplesperchannel{1,handles.channel},1) > 1
-        for n_blocks = 2:size(blocksamplesperchannel{1,handles.channel},1)
+    if size(handles.blocksamplesperchannel{1,handles.channel},1) > 1
+        for n_blocks = 2:size(handles.blocksamplesperchannel{1,handles.channel},1)
             block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
-            block_lim = repmat((blocksamplesperchannel{1,handles.channel}(n_blocks,1)/sr)*1000, 1, length(block_x_vector));
-            hLine2 = scatter(cax, block_x_vector, block_lim)
-            hLine2.MarkerHandle.get
-            hLine2.LineWidth = 0.6;
+            block_y_vector = repmat((handles.blocksamplesperchannel{1,handles.channel}(n_blocks,1)/handles.WC.sr)*1000, 1, length(block_x_vector));
+            hLine2 = scatter(cax, block_x_vector, block_y_vector);
+            hLine2.LineWidth = 0.1;
             hLine2.MarkerEdgeColor = 'k';
-%             hLine2.markertype = '.';
+            hLine2.Marker = '.';
         end
+        clear hLine2
     end
     %         set(hLine.MarkerHandle,'EdgeColorBinding','discrete','EdgeColorData',uint8(255*colind)')
     clear hLine

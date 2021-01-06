@@ -18,6 +18,10 @@ toplotind = [];
 colind = [];
 zeroind = max(interv);
 
+if ~isfield(handles,'blocksamplesperchannel') % During WC creation, this field is carried out in handles, but not when loading from WC and plot
+    load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel');
+    handles.blocksamplesperchannel = blocksamplesperchannel;
+end
 
 for k=interv
     max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
