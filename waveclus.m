@@ -30,7 +30,7 @@ guidata(handles.mainfig, handles);
 function loadbutton_Callback(source, eventdata)
 handles=guidata(get(source,'UserData'));
 handles=wc_clean_handles(handles);
-
+handles.ts_time=[0 10];
 % Update handles structure
 guidata(handles.mainfig, handles);
 handles=guidata(get(source,'UserData'));
@@ -108,20 +108,30 @@ pathname=handles.pathname;
 load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
 us_idx=strfind(filename,'_');
 n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
-block=whattofindwhere{handles.channel}{n_file}(1);
+blocks=whattofindwhere{handles.channel}{n_file};
 us_idx=strfind(pathname,filesep);
-tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
-if ~exist(tens_fname,'file'),
-    handles.ts=[0 0];
-    handles.ts_time=[0 1];
-else
-    q=load(tens_fname);
-    handles.ts=double(q.data(1:round(10*handles.WC.sr)))*handles.WC.transform_factor;
-    handles.ts_time=(1:length(handles.ts))/handles.WC.sr;
-    clear q;
-    set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
-    wc_plot_raw(handles);
+BB_data=[];
+for b=1:numel(blocks)
+    block=blocks(b);
+    tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
+    load(tens_fname);
+    BB_data=[BB_data data];
+    BB_block_samples(b)=numel(BB_data);
 end
+
+wc_bins=1/handles.WC.sr:1/handles.WC.sr:numel(BB_data)/handles.WC.sr;
+
+set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
+
+cla(handles.axesTS);
+hold(handles.axesTS,'on');
+plot(handles.axesTS,wc_bins, BB_data*handles.WC.transform_factor,'color','k','parent',handles.axesTS);
+plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(-handles.WC.thr,[2 1]),'color','r','parent',handles.axesTS);
+plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(handles.WC.thr,[2 1]),'color','r','parent',handles.axesTS);
+handles.spike_indicators=plot(handles.axesTS,[handles.index/1000 handles.index/1000]',repmat([3;2]*-handles.WC.thr,1,numel(handles.index)),'k');
+
+set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
+set(handles.axesTS,'ylim',[-handles.WC.thr handles.WC.thr]*3);
 
 handles=wc_plot_temperature(handles);
 handles=wc_plot_spikes_and_ISI(handles);
@@ -325,8 +335,8 @@ set(handles.hver,'xdata',[temp-1 temp-1]);
 % set(handles.htempmatch3,'Value',0);
 
 %% Treat fixed : Limit to only valid clusters
-%handles.fixed   =handles.fixed(1:handles.ncl);
-%handles.hcol    =handles.hcol(1:handles.ncl);
+handles.fixed   =handles.fixed(1:handles.ncl);
+handles.hcol    =handles.hcol(1:handles.ncl);
 
 fixed=find(handles.fixed);%all fixed clusters
 nfixed=length(fixed);
@@ -500,7 +510,7 @@ end
 
 handles=wc_plot_spikes_and_ISI(handles);
 handles=wc_plot_temperature(handles);
-if ~all(handles.ts==0), wc_plot_raw(handles); end
+% if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
 
@@ -553,6 +563,52 @@ loadbutton_Callback(source, eventdata)
 %unforced version?
 
 
+function previous_window(source,~)
+handles=guidata(get(source,'UserData'));
+window_length=handles.ts_time(2)-handles.ts_time(1);
+handles.ts_time=handles.ts_time-window_length;
+set_axes_limits(handles);
+set(handles.start_t_textbox,'String',num2str(handles.ts_time(1)));
+guidata(handles.mainfig, handles);
+
+function next_window(source,~)
+handles=guidata(get(source,'UserData'));
+window_length=handles.ts_time(2)-handles.ts_time(1);
+handles.ts_time=handles.ts_time+window_length;
+set_axes_limits(handles);
+set(handles.start_t_textbox,'String',num2str(handles.ts_time(1)));
+guidata(handles.mainfig, handles);
+
+function apply_start_t(source,~)
+handles=guidata(get(source,'UserData'));
+start_t=str2double(get(source,'String'));
+window_length=handles.ts_time(2)-handles.ts_time(1);
+handles.ts_time(1)=start_t;
+handles.ts_time(2)=start_t+window_length;
+set_axes_limits(handles);
+guidata(handles.mainfig, handles);
+
+function apply_window_length(source,~)
+    handles=guidata(get(source,'UserData'));
+    window_length=str2double(get(source,'String'));
+    handles.ts_time(2)=handles.ts_time(1)+window_length;
+    set_axes_limits(handles);
+    guidata(handles.mainfig, handles);
+
+function set_axes_limits(handles)
+% handles=guidata(get(source,'UserData'));
+% 
+% 
+%             %end_t=min([start_t+window_length numel(WC_data)/WC_sr]);
+%             
+            
+set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
+set(handles.axesTS,'ylim',[-handles.WC.thr handles.WC.thr]*3);
+%             
+%         set(handles.axesTS,'xlim',[start_t end_t]);
+%         set(handles.axesTS,'ylim',WC_ylim);
+% guidata(handles.mainfig, handles);
+
 function handles=create_mainfig(handles)
 handles.isaGUI=1;
 handles.mainfig=figure('Visible','on','Units','Normalized','Position',[0 0 1,0.9],...
@@ -566,6 +622,20 @@ ncol=5;
 nrow=4;
 stepx=0.02; width=(1-(ncol+1)*stepx)/ncol;
 stepy=0.05; hight=(1-(nrow+1)*stepy)/nrow;
+
+
+%% bb part
+handles.ts_time=[0 10];
+stepy2=0.03;
+y_pos_ts=1-(stepy+hight)*1.05;
+uicontrol('Style','pushbutton','String','Previous Window', 'units','normalized','Position',[0.7,y_pos_ts,0.08,stepy2],'UserData',handles.mainfig,'Callback',@previous_window);
+uicontrol('Style','pushbutton','String','Next Window',     'units','normalized','Position',[0.8,y_pos_ts,0.08,stepy2],'UserData',handles.mainfig,'Callback',@next_window);
+uicontrol('Style','text','String','Start (s)','units','normalized','Position',[0.5,y_pos_ts,0.04,stepy2]);
+handles.start_t_textbox       = uicontrol('Style','edit','units','normalized','String',num2str(handles.ts_time(1)),'Position',[0.55,y_pos_ts,0.04,stepy2],'UserData',handles.mainfig,'Callback',@apply_start_t);
+uicontrol('Style','text','String','Window (s)','units','normalized','Position',[0.6,y_pos_ts,0.04,stepy2]);
+handles.window_length_textbox = uicontrol('Style','edit','units','normalized','String',num2str(diff(handles.ts_time)),'Position',[0.65,y_pos_ts,0.04,stepy2],'UserData',handles.mainfig,'Callback',@apply_window_length);
+
+
 
 handles.htoread = uicontrol('units','normalized','Style','popupmenu','FontSize',12,...
     'String',{'ION','UCLA'},...
@@ -687,6 +757,9 @@ for r=2:nrow
         set(handles.hclustergroup{i},'Visible','Off');
     end
 end
+
+
+
 
 function close_or_make_invisible(source, ~)
 handles=guidata(get(source,'UserData'));

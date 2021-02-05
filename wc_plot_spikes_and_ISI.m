@@ -113,6 +113,12 @@ lims = handles.lims;
 axis(ax,lims);
 set(ax,'XGrid','on');
 
+%% color spike indicators in BB plot
+if isfield(handles,'spike_indicators')
+set(handles.spike_indicators(handles.classind{i}),'color',color);
+end
+
+
 function wc_plot_ISI(handles,i)
 if i==0, 
     i = length(handles.classind); 

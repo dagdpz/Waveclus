@@ -1,6 +1,6 @@
 function handles=wc_plot_features_vs_features(handles)
 MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT*5; %to prevent large plottings
-if ~isfield(handles,'hfeatures') || ~isvalid(handles.hfeatures),
+if ~isfield(handles,'hfeatures') %|| ~isvalid(handles.hfeatures),
     if ~isempty(handles.features),
         handles=wc_create_featuresfig(handles);
         % Update handles structure
@@ -97,10 +97,12 @@ for i=2%:nf
             drawnow
             hLine.MarkerHandle.EdgeColorBinding = 'discrete';
             hLine.MarkerHandle.EdgeColorData = uint8(255*colind)';
+            hLine.UserData = {i j};
         else
             [~, colix]=ismember(colind(:,1:3),handles.colors(used_colors,:),'rows');
             %colix=size(handles.colors,1)+1-colix;
             hLine = scatter(cax,handles.features(toplotind,i),handles.features(toplotind,j),30,colix,'.');
+            set(hLine,'UserData',{i j});
             drawnow
         end
         %         set(hLine.MarkerHandle,'EdgeColorBinding','discrete','EdgeColorData',uint8(255*colind)')

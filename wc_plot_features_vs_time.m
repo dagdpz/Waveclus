@@ -78,9 +78,11 @@ for i=2:nf
         hLine.MarkerHandle.EdgeColorData = uint8(255*colind)';
         hLine.MarkerHandle.FaceColorBinding = 'discrete';
         hLine.MarkerHandle.FaceColorData = uint8(255*colind)';
+        hLine.UserData = {1 i};
     else
             [~, colix]=ismember(colind(:,1:3),handles.colors(used_colors,:),'rows');
         hLine = scatter(cax,handles.features(toplotind,i),handles.index(toplotind),30,colix,'.');
+        set(hLine,'UserData',{1 i});
         drawnow
     end
     %         set(hLine.MarkerHandle,'EdgeColorBinding','discrete','EdgeColorData',uint8(255*colind)')
