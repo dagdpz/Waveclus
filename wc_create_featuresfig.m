@@ -1,5 +1,5 @@
 function handles=wc_create_featuresfig(handles)
-if ishandle(handles.mainfig) && isfield(handles,'hfeatures') && isvalid(handles.hfeatures) %gui open, timecoursefigurehandle exists and figure is there
+if ishandle(handles.mainfig) && isfield(handles,'hfeatures') && ishandle(handles.hfeatures) && isvalid(handles.hfeatures) %gui open, timecoursefigurehandle exists and figure is there
     figure(handles.hfeatures);clf;
 else
     handles.hfeatures=figure('Visible','On','Units','Normalized','Position',[0.01,0.01,0.9,0.9],...

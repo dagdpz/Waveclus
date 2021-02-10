@@ -19,8 +19,6 @@ handles=create_mainfig(handles);
 handles=create_supplfig(handles);
 handles=create_supplfig2(handles);
 handles.spikeaxes=[handles.spikeaxes handles.axesClust0];
-%handles.isiaxes=[handles.isiaxes handles.axesISI0];
-
 handles=wc_create_detailsfigure(handles);
 
 figure(handles.mainfig);
@@ -102,41 +100,42 @@ for i=1:handles.ncl, handles.classind{i}=find(q.cluster_class(:,1)==i)'; end
 %cluster zero
 handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
 
-
-filename= handles.filename;
-pathname=handles.pathname;
-load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
-us_idx=strfind(filename,'_');
-n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
-blocks=whattofindwhere{handles.channel}{n_file};
-us_idx=strfind(pathname,filesep);
-BB_data=[];
-for b=1:numel(blocks)
-    block=blocks(b);
-    tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
-    load(tens_fname);
-    BB_data=[BB_data data];
-    BB_block_samples(b)=numel(BB_data);
-end
-
-wc_bins=1/handles.WC.sr:1/handles.WC.sr:numel(BB_data)/handles.WC.sr;
-
-set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
-
-cla(handles.axesTS);
-hold(handles.axesTS,'on');
-plot(handles.axesTS,wc_bins, BB_data*handles.WC.transform_factor,'color','k','parent',handles.axesTS);
-plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(-handles.WC.thr,[2 1]),'color','r','parent',handles.axesTS);
-plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(handles.WC.thr,[2 1]),'color','r','parent',handles.axesTS);
-handles.spike_indicators=plot(handles.axesTS,[handles.index/1000 handles.index/1000]',repmat([3;2]*-handles.WC.thr,1,numel(handles.index)),'k');
-
-set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
-set(handles.axesTS,'ylim',[-handles.WC.thr handles.WC.thr]*3);
+plot_timecourse(handles.plot_timecourse);
+% 
+% filename= handles.filename;
+% pathname=handles.pathname;
+% load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
+% us_idx=strfind(filename,'_');
+% n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
+% blocks=whattofindwhere{handles.channel}{n_file};
+% us_idx=strfind(pathname,filesep);
+% BB_data=[];
+% for b=1:numel(blocks)
+%     block=blocks(b);
+%     tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
+%     load(tens_fname);
+%     BB_data=[BB_data data];
+%     BB_block_samples(b)=numel(BB_data);
+% end
+% 
+% wc_bins=1/handles.WC.sr:1/handles.WC.sr:numel(BB_data)/handles.WC.sr;
+% 
+% set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
+% 
+% cla(handles.axesTS);
+% hold(handles.axesTS,'on');
+% plot(handles.axesTS,wc_bins, BB_data*handles.WC.transform_factor,'color','k','parent',handles.axesTS);
+% plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(-handles.WC.thr,[2 1]),'color','r','parent',handles.axesTS);
+% plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(handles.WC.thr,[2 1]),'color','r','parent',handles.axesTS);
+% handles.spike_indicators=plot(handles.axesTS,[handles.index/1000 handles.index/1000]',repmat([3;2]*-handles.WC.thr,1,numel(handles.index)),'k');
+% 
+% set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
+% set(handles.axesTS,'ylim',[-handles.WC.thr handles.WC.thr]*3);
 
 handles=wc_plot_temperature(handles);
 handles=wc_plot_spikes_and_ISI(handles);
 
-set(handles.textStatus,'string',sprintf('%s',[pathname(numel(handles.datafolder)+1:end) handles.filename]));
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function nextbutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
@@ -179,7 +178,6 @@ close(handles.hfeatures)
 figure(handles.mainfig);
 set(handles.textStatus,'string',sprintf('Saved %s',handles.filename));
 
-
 function detailsbuttons_Callback(source,~)
 % Plot details of selected cluster, a new figure
 tag=get(source,'Tag');
@@ -214,69 +212,6 @@ handles=wc_plot_spikes_and_ISI(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
 % Update handles structure
 guidata(handles.mainfig, handles);
-
-% function tempmatchbutton_Callback(source, ~)
-% handles=guidata(get(source,'UserData'));
-% do_or_undo=get(source,'Value');
-% accept_classification(handles);
-% 
-% if do_or_undo == 1,
-%     handles=wc_classifyrest(handles,2);
-%     set(handles.htempmatch,'String','Matched');
-% else
-%     for i=1:handles.ncl,
-%         if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
-%     end
-%     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-%     %set(handles.htempmatch,'String','Near');
-% end
-% 
-% handles=wc_plot_spikes_and_ISI(handles);
-% if ~all(handles.ts==0), wc_plot_raw(handles); end
-% % Update handles structure
-% guidata(handles.mainfig, handles);
-% 
-% function tempmatchbutton2_Callback(source, ~)
-% handles=guidata(get(source,'UserData'));
-% do_or_undo=get(source,'Value');
-% accept_classification(handles);
-% 
-% if do_or_undo == 1,
-%     handles=wc_classifyrest(handles,3);
-%     set(handles.htempmatch2,'String','Matched');
-% else
-%     for i=1:handles.ncl,
-%         if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
-%     end
-%     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-%     %set(handles.htempmatch2,'String','Near T');
-% end
-% 
-% handles=wc_plot_spikes_and_ISI(handles);
-% if ~all(handles.ts==0), wc_plot_raw(handles); end
-% % Update handles structure
-% guidata(handles.mainfig, handles);
-% 
-% function tempmatchbutton3_Callback(source, ~)
-% handles=guidata(get(source,'UserData'));
-% do_or_undo=get(source,'Value');
-% accept_classification(handles);
-% 
-% if do_or_undo,
-%     handles=wc_classifyrest(handles,4);
-%     set(handles.htempmatch3,'String','Matched');
-% else
-%     for i=1:handles.ncl,
-%         if ~handles.fixed(i), handles.classind{i}=intersect(handles.classind{i},[handles.classind_unforced{1:end-1}]); end
-%     end
-%     handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
-%    % set(handles.htempmatch3,'String','NearT1');
-% end
-% 
-% handles=wc_plot_spikes_and_ISI(handles);
-% if ~all(handles.ts==0), wc_plot_raw(handles); end
-% % Update handles structure
-% guidata(handles.mainfig, handles);
 
 function accept_classification(handles)
 %handles=guidata(get(source,'UserData'));
@@ -549,19 +484,10 @@ function toplot_Callback(source,~)
 handles=guidata(get(source,'UserData'));
 %if data already loaded
 if isfield(handles,'spikes'), handles=wc_plot_spikes_and_ISI(handles); end
-% Update handles structure
 guidata(handles.mainfig, handles);
 
 function toread_Callback(source,eventdata)
-% handles=guidata(get(source,'UserData'));
 loadbutton_Callback(source, eventdata)
-
-
-
-
-%append only changed variables, classind, handles (temp, min_clus),
-%unforced version?
-
 
 function previous_window(source,~)
 handles=guidata(get(source,'UserData'));
@@ -596,18 +522,54 @@ function apply_window_length(source,~)
     guidata(handles.mainfig, handles);
 
 function set_axes_limits(handles)
-% handles=guidata(get(source,'UserData'));
-% 
-% 
-%             %end_t=min([start_t+window_length numel(WC_data)/WC_sr]);
-%             
-            
 set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
 set(handles.axesTS,'ylim',[-handles.WC.thr handles.WC.thr]*3);
-%             
-%         set(handles.axesTS,'xlim',[start_t end_t]);
-%         set(handles.axesTS,'ylim',WC_ylim);
-% guidata(handles.mainfig, handles);
+
+
+function plot_timecourse(source,~)
+
+handles=guidata(get(source,'UserData'));
+ifplot=get(handles.plot_timecourse,'Value');
+
+
+cla(handles.axesTS);
+
+if ifplot
+    filename= handles.filename;
+    pathname=handles.pathname;
+    load([pathname filesep 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
+    us_idx=strfind(filename,'_');
+    %n_file=str2double(filename(us_idx(2)+1:us_idx(3)-1));
+    n_file=str2double(filename(us_idx(2)+1:end));
+    blocks=whattofindwhere{handles.channel}{n_file};
+    us_idx=strfind(pathname,filesep);
+    BB_data=[];
+    for b=1:numel(blocks)
+        block=blocks(b);
+        tens_fname=[pathname(1:us_idx(end-1)) 'WC_Block-' num2str(block) filesep 'datafilt_ch' sprintf('%03d.mat',handles.channel)];
+        load(tens_fname);
+        BB_data=[BB_data data];
+        BB_block_samples(b)=numel(BB_data);
+    end
+    
+    wc_bins=1/handles.WC.sr:1/handles.WC.sr:numel(BB_data)/handles.WC.sr;
+    
+    set(handles.textStatus,'string',sprintf('Plotting %s',handles.filename));
+    
+    hold(handles.axesTS,'on');
+    plot(handles.axesTS,wc_bins, BB_data*handles.WC.transform_factor,'color','k','parent',handles.axesTS);
+    plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(-handles.WC.thr(1),[2 1]),'color','r','parent',handles.axesTS);
+    plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(handles.WC.thr(1),[2 1]),'color','r','parent',handles.axesTS);
+    plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(-handles.WC.thr(2),[2 1]),'color','g','parent',handles.axesTS);
+    plot(handles.axesTS,[wc_bins(1);wc_bins(end)], repmat(handles.WC.thr(2),[2 1]),'color','g','parent',handles.axesTS);
+    handles.spike_indicators=plot(handles.axesTS,[handles.index/1000 handles.index/1000]',repmat([3;2]*-handles.WC.thr(1),1,numel(handles.index)),'k');
+    
+    set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
+    set(handles.axesTS,'ylim',[-handles.WC.thr(1) handles.WC.thr(1)]*3);
+end
+
+guidata(handles.mainfig, handles);
+
 
 function handles=create_mainfig(handles)
 handles.isaGUI=1;
@@ -634,7 +596,8 @@ uicontrol('Style','text','String','Start (s)','units','normalized','Position',[0
 handles.start_t_textbox       = uicontrol('Style','edit','units','normalized','String',num2str(handles.ts_time(1)),'Position',[0.55,y_pos_ts,0.04,stepy2],'UserData',handles.mainfig,'Callback',@apply_start_t);
 uicontrol('Style','text','String','Window (s)','units','normalized','Position',[0.6,y_pos_ts,0.04,stepy2]);
 handles.window_length_textbox = uicontrol('Style','edit','units','normalized','String',num2str(diff(handles.ts_time)),'Position',[0.65,y_pos_ts,0.04,stepy2],'UserData',handles.mainfig,'Callback',@apply_window_length);
-
+handles.plot_timecourse = uicontrol('units','normalized','Style','checkbox','String','Plot timecourse','FontSize',12,'Tag','Plot_t',...
+            'UserData',handles.mainfig,'Position',[0.4,y_pos_ts,0.08,stepy2],'Callback',{@plot_timecourse});
 
 
 handles.htoread = uicontrol('units','normalized','Style','popupmenu','FontSize',12,...
@@ -734,32 +697,17 @@ for r=2:nrow
         handles.spikeaxes(i)=axes('position',[x y+stepy*0.45 width hight],...
             'Tag',sprintf('Clust%d',i),'ButtonDownFcn',{@copy_to_new_window},'NextPlot','add');
         handles.hfuse(i) = uicontrol('units','normalized','Style','checkbox','String','Fuse','FontSize',12,...
-            'Tag',sprintf('Fuse%d',i),...
-            'UserData',handles.mainfig,...
-            'Position',[x+0.03 y 0.035 0.02],...
-            'Callback',{@fusebuttons_Callback});
+            'Tag',sprintf('Fuse%d',i),'UserData',handles.mainfig,'Position',[x+0.03 y 0.035 0.02],'Callback',{@fusebuttons_Callback});
         handles.hfix(i) = uicontrol('units','normalized','Style','checkbox','String','Fix','FontSize',12,...
-            'Tag',sprintf('Fix%d',i),...
-            'UserData',handles.mainfig,...
-            'Position',[x y 0.025 0.02],...
-            'Callback',{@fixbuttons_Callback});
+            'Tag',sprintf('Fix%d',i),'UserData',handles.mainfig,'Position',[x y 0.025 0.02],'Callback',{@fixbuttons_Callback});
         handles.hreject(i) = uicontrol('units','normalized','Style','pushbutton','String','X','FontSize',14,'ForeGroundColor','r',...
-            'Tag',sprintf('Reject%d',i),...
-            'UserData',handles.mainfig,...
-            'Position',[x+0.08 y 0.01 0.02],...
-            'Callback',{@rejectbuttons_Callback});
+            'Tag',sprintf('Reject%d',i),'UserData',handles.mainfig,'Position',[x+0.08 y 0.01 0.02],'Callback',{@rejectbuttons_Callback});
         handles.hdetails(i) = uicontrol('units','normalized','Style','pushbutton','String','Details','FontSize',12,...
-            'Tag',sprintf('Details%d',i),...
-            'UserData',handles.mainfig,...
-            'Position',[x+0.11 y 0.06 0.02],...
-            'Callback',{@detailsbuttons_Callback});
+            'Tag',sprintf('Details%d',i),'UserData',handles.mainfig,'Position',[x+0.11 y 0.06 0.02],'Callback',{@detailsbuttons_Callback});
         handles.hclustergroup{i}=[handles.spikeaxes(i) handles.hfuse(i) handles.hfix(i) handles.hreject(i) handles.hdetails(i)];
         set(handles.hclustergroup{i},'Visible','Off');
     end
 end
-
-
-
 
 function close_or_make_invisible(source, ~)
 handles=guidata(get(source,'UserData'));
@@ -771,7 +719,6 @@ end
 guidata(handles.mainfig, handles);
 
 function handles=create_supplfig(handles)
-
 handles.hsuppl = figure('Visible','Off','Units','Normalized','Position',[0 0 1 0.9],...
     'Name','More clusters','NumberTitle','off',...
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...
@@ -814,7 +761,6 @@ for r=1:nrow
 end
 
 function handles=create_supplfig2(handles)
-
 handles.hsuppl2 = figure('Visible','Off','Units','Normalized','Position',[0 0 1 0.9],...
     'Name','More clusters','NumberTitle','off',...
     'Paperunits','points','Paperorientation','portrait','PaperPosition',[0 0 1920 1080],...

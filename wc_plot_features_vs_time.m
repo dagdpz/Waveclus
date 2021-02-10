@@ -1,6 +1,6 @@
 function handles=wc_plot_features_vs_time(handles)
-MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT*5; %to prevent large plottings
-if ~isfield('htimecourse',handles),
+MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT*10;
+if ~isfield('htimecourse',handles) || ~ishandle(handles.htimecourse),
     if ~isempty(handles.index),
         handles=wc_create_featurevstimefig(handles);
         % Update handles structure
@@ -18,9 +18,10 @@ toplotind = [];
 colind = [];
 zeroind = max(interv);
 
-
+total_N_spikes= numel([handles.classind{:}]);
 for k=interv
-    max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
+%     max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
+    max_spikes=round(length(handles.classind{k})/total_N_spikes*MAX_SPIKES_TO_PLOT);
     spk_indexes=randperm(length(handles.classind{k}));
     toplotind = cat(2,toplotind,handles.classind{k}(spk_indexes(1:max_spikes)));    
     if k == zeroind &&  handles.ncl<k

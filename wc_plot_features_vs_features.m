@@ -1,6 +1,6 @@
 function handles=wc_plot_features_vs_features(handles)
-MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT*5; %to prevent large plottings
-if ~isfield(handles,'hfeatures') %|| ~isvalid(handles.hfeatures),
+MAX_SPIKES_TO_PLOT=handles.const_MAX_SPIKES_TO_PLOT*10;
+if ~isfield(handles,'hfeatures') || ~ishandle(handles.hfeatures)%|| ~isvalid(handles.hfeatures),
     if ~isempty(handles.features),
         handles=wc_create_featuresfig(handles);
         % Update handles structure
@@ -18,8 +18,10 @@ toplotind = [];
 colind = [];
 zeroind = max(interv);
 
+total_N_spikes= numel([handles.classind{:}]);
 for k=interv
-    max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
+    %max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
+    max_spikes=max([1 round(length(handles.classind{k})/total_N_spikes*MAX_SPIKES_TO_PLOT)]);
     toplotind = cat(2,toplotind,handles.classind{k}(randsample(length(handles.classind{k}),max_spikes))); % random sample... is actually important
     if k == zeroind && handles.ncl<k
         colind = cat(1,colind,zeros(max_spikes,3));
