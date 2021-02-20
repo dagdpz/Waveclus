@@ -17,7 +17,6 @@ tic
 channelfile=[sprintf('%03d',handles.current_channel) '_' num2str(handles.current_channel_file)];
 filename=['dataspikes_ch' channelfile '.mat'];
 handles.channel=handles.current_channel;
-%handles.thrsign=thresholds{k};
 
 disp(filename)
 load([handles.WC_concatenation_folder filename])
@@ -34,11 +33,6 @@ handles.fname = ['data_' channelfile];   %filename for interaction with SPC
 min_clus = max(handles.WC.min_clus_abs,handles.WC.min_clus_rel*min(nspk,handles.WC.max_spikes2cluster));
 handles.WC.min_clus = min_clus;
 
-% fprintf('Feature detection...\n');
-%CALCULATES INPUTS TO THE CLUSTERING ALGORITHM
-% tic
-% [features,feature_names,inputs] = wc_feature_selection(spikes,index,handles);
-% toc
 handles.WC.inputs = inputs;
 save([handles.WC_concatenation_folder filename],'features','feature_names','-append');
 
@@ -75,48 +69,12 @@ if ~isempty(features)
     fprintf('Adding SPC output information into results file...\n');
     save([handles.WC_concatenation_folder filename],'tree','classtemp','-append');
     
-    n_classes=0;
     for i=1:handles.WC.max_nrclasses,
         classind{i}=[];
     end
-    temp_start=1;
-    handles.WC.clus_per_temp=[];
-    while n_classes < handles.WC.max_nrclasses-1 && temp_start<size(tree,1)% max clusters ( leave 1 for unclustered) not reached yet
-        [temp] = wc_find_temperature(tree(temp_start:end,:),handles); %% need to reduce tree?
-        temp=temp+temp_start-1;
-        
-        %DEFINE CLUSTERS for specific temperature using min_clus variable
-        n_classes=sum(~cellfun(@isempty,classind));
-        clusters_for_this_temp=[];
-        for i=2:handles.WC.max_nrclasses,
-            t=classtemp{temp,i};
-            t = setdiff(t,[classind{:}]);
-            if length(t)>min_clus && n_classes < handles.WC.max_nrclasses
-                n_classes=n_classes+1;
-                classind{n_classes}=t;
-                clusters_for_this_temp=[clusters_for_this_temp i];
-            end
-        end
-        if temp==temp_start % didnt find appropriate temperature
-            break
-        end
-        if clusters_for_this_temp
-            handles.WC.clus_per_temp=[handles.WC.clus_per_temp [repmat(temp,1,numel(clusters_for_this_temp)); clusters_for_this_temp]];
-        end
-        temp_start=temp;
-    end
-    %% add biggest cluster of last iteration
-    t=classtemp{temp,1};
-    t = setdiff(t,[classind{:}]);
-    if n_classes+1<handles.WC.max_nrclasses;
-        classind{n_classes+1}=t;
-        handles.WC.clus_per_temp=[handles.WC.clus_per_temp [temp; 1]];
-    end
+    [handles,classind]=wc_automatic_temperature_selection(handles,classind,classtemp,tree);
     
-    classind(cellfun(@isempty,classind))=[];
     
-    %zero cluster, includes all unclustered spikes
-    classind{end+1}=setdiff(1:nspk, [classind{:}]);
     
     %% classify rest as default
     handles.spikes=spikes;
@@ -185,12 +143,11 @@ if ~isempty(features)
         end
     end
     %spikes file
-    clear time
-    clear index_ spikes_
-    clear cluster_class
-    clear clu tree classtemp
-    clear classind cluster_class
+%     clear time
+%     clear index_ spikes_
+%     clear cluster_class
+%     clear clu tree classtemp
+%     clear classind cluster_class
 end
 disp([' clustering ' handles.WC_concatenation_folder filename ' took ' num2str(round(toc)) ' seconds']);
-
 clear handles

@@ -6,22 +6,34 @@ function wc_cluster_cut_callback(source, ~)
 fig = figure(100);
 cla;
 copyobj(get(source,'children'),gca);
-%UserData = source.UserData;
+
+%% only to take over colors correctly
+handles = guidata(get(source,'UserData'));
+interv=find(cellfun(@isempty,handles.classind) == 0);
+restcluster_present=handles.ncl<max(interv);
+if restcluster_present
+    cols=[handles.colors(interv(1:end-1),:) ; handles.colors(end,:)];
+else
+    cols=handles.colors(interv,:);
+end
+colormap(cols);
+%set(0,'DefaultAxesColorOrder',handles.colors);
+
 
 deletepoints = true;
 h = struct;
 Tag=get(source,'Tag');
-
+set(fig,'Tag',Tag);
 if strcmp(Tag,'Clus') % if called from cluster window
     set(fig,'Name','Select Lines to Delete');
 end
-if strcmp(Tag,'Feat') % if called from spike plot
+if any(strfind(Tag,'Time_')) || any(strfind(Tag,'Feature1vs')) % if called from spike plot
     SelectionType=get(get(source,'Parent'),'SelectionType');
-    if strcmp(SelectionType,'alt') % see if we want to remove from a cluster ...
+    if strcmp(SelectionType,'alt') % see if we want to create a new cluster ...
     set(fig,'Name','Delete Points');
-    else % ...or create a new one
-    set(fig,'Name','Select new Cluster');
         deletepoints = false;
+    else % ...or remove from one
+    set(fig,'Name','Select new Cluster');
     end
 end
 
@@ -59,7 +71,11 @@ try
         indexdata = repmat(handles.classind{h.featureIndex{2}}', 1, size(ydata,2));
     else % add or remove from a feature plot
         xdata = [handles.features([handles.classind{:}], h.featureIndex{1})];
+        if h.featureIndex{2}==1 % quick workaround for time
+        ydata = [handles.index([handles.classind{:}])];
+        else
         ydata = [handles.features([handles.classind{:}], h.featureIndex{2})];
+        end
         indexdata = [handles.classind{:}];
     end
     
