@@ -75,6 +75,7 @@ handles.index=q.cluster_class(:,2);
 handles.nspk=length(handles.index);
 handles.ncl=max(q.cluster_class(:,1));
 handles.nfeatures=size(q.features,2);
+handles.plotted(1:handles.ncl)=1;
 
 handles.min_clus=q.par.min_clus;
 if isfield(q.par,'temp')
@@ -516,7 +517,7 @@ if ifplot
     set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
     set(handles.axesTS,'ylim',[-handles.WC.thr(1) handles.WC.thr(1)]*3);
 end
-handles=wc_plot_spikes_and_ISI(handles); %% needs to be her so psike indicator colors are always updated as well
+handles=wc_plot_spikes_and_ISI(handles); %% needs to be her so spike indicator colors are always updated as well
 guidata(handles.mainfig, handles);
 
 %% main figure (and additional cluster) functions
@@ -763,7 +764,7 @@ handles.const_MAX_SPIKES_TO_PLOT=handles.nspk;
 else
 handles.const_MAX_SPIKES_TO_PLOT=1000;
 end
-handles=wc_plot_spikes_and_ISI(handles)
+handles=wc_plot_spikes_and_ISI(handles);
 guidata(handles.mainfig, handles); 
 
 
