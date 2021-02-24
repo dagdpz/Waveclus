@@ -19,7 +19,7 @@ zeroind = max(interv);
 
 total_N_spikes= numel([handles.classind{:}]);
 
-if ~isfield(handles,'blocksamplesperchannel') % to plot lines between blocks 
+if ~isfield(handles,'blocksamplesperchannel') % to plot lines between blocks
     load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel');
     handles.blocksamplesperchannel = blocksamplesperchannel;
 end
@@ -84,22 +84,24 @@ for i=2:nf
         hLine.MarkerHandle.FaceColorData = uint8(255*colind)';
         hLine.UserData = {1 i};
         
-        %draw horizontal lines between blocks
-        if size(handles.blocksamplesperchannel{1,handles.channel},1) > 1
-            for n_blocks = 2:size(handles.blocksamplesperchannel{1,handles.channel},1)
-                block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
-                block_y_vector = repmat((handles.blocksamplesperchannel{1,handles.channel}(n_blocks,1)/handles.WC.sr)*1000, 1, length(block_x_vector));
-                hLine2 = scatter(cax, block_x_vector, block_y_vector);
-                hLine2.LineWidth = 0.1;
-                hLine2.MarkerEdgeColor = 'k';
-                hLine2.Marker = '.';
-            end
-            clear hLine2
-        end
     else
         [~, colix]=ismember(colind(:,1:3),handles.colors(used_colors,:),'rows');
         hLine = scatter(cax,handles.features(toplotind,i),handles.index(toplotind),15,colix,'.');
         set(hLine,'UserData',{i 1});
+    end
+    
+    %draw horizontal lines between blocks
+    if size(handles.blocksamplesperchannel{1,handles.channel},1) > 1
+        for n_blocks = 2:size(handles.blocksamplesperchannel{1,handles.channel},1)
+            block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
+            block_y_vector = repmat((handles.blocksamplesperchannel{1,handles.channel}(n_blocks,1)/handles.WC.sr)*1000, 1, length(block_x_vector));
+            %                 hLine2 = plot(cax, block_x_vector, block_y_vector);
+            hLine2 = plot(cax, block_x_vector, block_y_vector,'k');
+            hLine2.LineWidth = 0.1;
+            %                 hLine2.MarkerEdgeColor = 'k';
+            %                 hLine2.Marker = '.';
+        end
+        clear hLine2
     end
     
     clear hLine
