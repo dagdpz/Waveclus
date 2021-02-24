@@ -37,7 +37,13 @@ if any(strfind(Tag,'Time_')) || any(strfind(Tag,'Feature1vs')) % if called from 
     end
 end
 
-    h.featureIndex = get(get(get(fig,'Children'),'Children'),'UserData');%[fig.Children.Children.UserData]; % tell which features it was plotting
+VER=version('-release');
+VER=str2double(VER(1:4));
+if VER>=2014
+    h.featureIndex = [fig.Children.Children.UserData]; % tell which features it was plotting
+else
+    h.featureIndex = get(get(get(fig,'Children'),'Children'),'UserData');%
+end
 h.polygon = impoly();
 if isvalid(h.polygon)
     set(fig,'CloseRequestFcn',{@closeCluster_callback h source deletepoints})

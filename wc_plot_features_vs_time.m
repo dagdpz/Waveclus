@@ -82,7 +82,7 @@ for i=2:nf
         hLine.MarkerHandle.EdgeColorData = uint8(255*colind)';
         hLine.MarkerHandle.FaceColorBinding = 'discrete';
         hLine.MarkerHandle.FaceColorData = uint8(255*colind)';
-        hLine.UserData = {1 i};
+        hLine.UserData = {i 1};
         
     else
         [~, colix]=ismember(colind(:,1:3),handles.colors(used_colors,:),'rows');
