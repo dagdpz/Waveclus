@@ -17,8 +17,16 @@ else
     cols=handles.colors(interv,:);
 end
 colormap(cols);
-%set(0,'DefaultAxesColorOrder',handles.colors);
 
+stepsize=1/numel(interv);
+xpos=0;
+for c=interv   
+handles.(['clus' num2str(c)])=uicontrol('units','normalized','Style','togglebutton','String',['clus' num2str(c)],'FontSize',12,...
+    'Tag',num2str(c),'BackgroundColor',cols(c,:),...
+    'Position',[stepsize*1/6+xpos 0.97 stepsize*2/3 0.035],...
+    'Callback',{@clusterselection_Callback}); 
+    xpos=xpos+stepsize;
+end
 
 deletepoints = true;
 h = struct;
@@ -42,22 +50,31 @@ VER=str2double(VER(1:4));
 if VER>=2014
     h.featureIndex = [fig.Children.Children.UserData]; % tell which features it was plotting
 else
-    h.featureIndex = get(get(get(fig,'Children'),'Children'),'UserData');%
+    aa=get(get(fig,'Children'),'Children');
+    h.featureIndex = get(aa{~cellfun(@isempty,aa)},'UserData');%
 end
+if strcmp(SelectionType,'extend') % see if we want to simply cut straight 
+h.polygon = imrect();   
+else
 h.polygon = impoly();
+end
 if isvalid(h.polygon)
-    set(fig,'CloseRequestFcn',{@closeCluster_callback h source deletepoints})
+    set(fig,'CloseRequestFcn',{@closeCluster_callback h deletepoints handles interv})
 end
 
-function closeCluster_callback(source, ~, h, outersource, deletepoints)
+function closeCluster_callback(source, ~, h, deletepoints, handles, interv)
 %return if user specified no points
+for c=interv
+valid_clusters(c)=get(handles.(['clus' num2str(c)]),'Value');
+end
+if ~any(valid_clusters)
+    valid_clusters=ones(size(valid_clusters));
+end
 if  ~isvalid(h.polygon)
     delete(source);
     return;
 end
 try
-    %findobj(0, 'tag', 'GUI1');
-    handles=guidata(get(outersource,'UserData'));
     nodes = getPosition(h.polygon);
     %return if the polygon is 2-Dimensional
     if length(nodes) < 3
@@ -86,6 +103,8 @@ try
     end
     
     index = inpolygon(xdata(:), ydata(:), nodes(:,1), nodes(:,2));
+    [validindex]=ismember([handles.classind{:}],[handles.classind{valid_clusters==1}]);
+    index = index & validindex';
     hold on;
     scatter(xdata(index), ydata(index));
     drawnow;
@@ -111,9 +130,6 @@ try
         handles.classind{end}=setdiff(1:handles.nspk,[handles.classind{1:end-1}]);
         handles.ncl = handles.ncl + 1;
     end
-    
-    
- 
     handles=wc_plot_spikes_and_ISI(handles);
     guidata(handles.mainfig, handles);
 catch ex
@@ -122,3 +138,5 @@ end
 set(handles.hclassify,'String','Classify');
 set(handles.hclassify,'Value',0);
 delete(source);
+
+function clusterselection_Callback(source,~)

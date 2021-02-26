@@ -26,7 +26,7 @@ end
 
 for k=interv
     %     max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
-    max_spikes=round(length(handles.classind{k})/total_N_spikes*MAX_SPIKES_TO_PLOT);
+    max_spikes=max([1 round(length(handles.classind{k})/total_N_spikes*MAX_SPIKES_TO_PLOT)]);
     spk_indexes=randperm(length(handles.classind{k}));
     toplotind = cat(2,toplotind,handles.classind{k}(spk_indexes(1:max_spikes)));
     if k == zeroind &&  handles.ncl<k
@@ -90,19 +90,19 @@ for i=2:nf
         set(hLine,'UserData',{i 1});
     end
     
-    %draw horizontal lines between blocks
-    if size(handles.blocksamplesperchannel{1,handles.channel},1) > 1
-        for n_blocks = 2:size(handles.blocksamplesperchannel{1,handles.channel},1)
-            block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
-            block_y_vector = repmat((handles.blocksamplesperchannel{1,handles.channel}(n_blocks,1)/handles.WC.sr)*1000, 1, length(block_x_vector));
-            %                 hLine2 = plot(cax, block_x_vector, block_y_vector);
-            hLine2 = plot(cax, block_x_vector, block_y_vector,'k');
-            hLine2.LineWidth = 0.1;
-            %                 hLine2.MarkerEdgeColor = 'k';
-            %                 hLine2.Marker = '.';
-        end
-        clear hLine2
-    end
+%     %draw horizontal lines between blocks
+%     if size(handles.blocksamplesperchannel{1,handles.channel},1) > 1
+%         for n_blocks = 2:size(handles.blocksamplesperchannel{1,handles.channel},1)
+%             block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
+%             block_y_vector = repmat((handles.blocksamplesperchannel{1,handles.channel}(n_blocks,1)/handles.WC.sr)*1000, 1, length(block_x_vector));
+%             %                 hLine2 = plot(cax, block_x_vector, block_y_vector);
+%             hLine2 = plot(cax, block_x_vector, block_y_vector,'k');
+%             hLine2.LineWidth = 0.1;
+%             %                 hLine2.MarkerEdgeColor = 'k';
+%             %                 hLine2.Marker = '.';
+%         end
+%         clear hLine2
+%     end
     
     clear hLine
 end

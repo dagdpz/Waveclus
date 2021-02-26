@@ -67,6 +67,7 @@ clear q;
 
 % Update handles structure
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function handles=handles_from_data(handles,q)
 handles.WC=q.par;
@@ -107,8 +108,6 @@ handles.classind{end+1}=setdiff(1:handles.nspk,[handles.classind{:}]);
 handles=wc_plot_temperature(handles);
 guidata(handles.mainfig, handles);
 plot_timecourse(handles.plot_timecourse);
-
-set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function nextbutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
@@ -170,6 +169,7 @@ guidata(handles.mainfig, handles); % Update handles structure
 
 function classifybutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 do_or_undo=get(source,'Value');
 accept_classification(handles);
 if do_or_undo == 1,
@@ -186,6 +186,7 @@ end
 handles=wc_plot_spikes_and_ISI(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
 guidata(handles.mainfig, handles); % Update handles structure
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function accept_classification(handles)
 set(handles.hclassify,'String','Class T');
@@ -213,7 +214,7 @@ end
 
 function changetempbutton_Callback(source, ~)
 handles=guidata(get(source,'UserData'));
-
+set(handles.textStatus,'string',sprintf('Processing...'));
 %% Get the mouse input
 [temp, min_clus, buttn]= ginput(1);                  
 if buttn==3
@@ -301,16 +302,21 @@ end
 handles=wc_plot_spikes_and_ISI(handles);
 if ~all(handles.ts==0), wc_plot_raw(handles); end
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 %% Feature plots 
 
 function plotfeaturesbutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 wc_plot_features_vs_features(handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function plottimecoursebutton_Callback(source,~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 wc_plot_features_vs_time(handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function toplot_Callback(source,~)
 handles=guidata(get(source,'UserData'));
@@ -322,6 +328,7 @@ guidata(handles.mainfig, handles);
 
 function rejectbuttons_Callback(source,~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 % Reject cluster i
 tag=get(source,'Tag');
 i=str2double(tag(7:end));
@@ -360,10 +367,12 @@ handles=wc_plot_temperature(handles);
 handles.rejected=1;
 
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function fusebutton_Callback(source,~)
 % Fuse selected clusters cluster
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 to_fuse=[];
 for i=1:numel(handles.hfuse)
     if isobject(handles.hfuse(i))
@@ -422,6 +431,7 @@ end
 handles=wc_plot_spikes_and_ISI(handles);
 handles=wc_plot_temperature(handles);
 guidata(handles.mainfig, handles); % Update handles structure
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function fusebuttons_Callback(source,~)
 
@@ -449,35 +459,43 @@ guidata(handles.mainfig, handles);
 
 function previous_window(source,~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 window_length=handles.ts_time(2)-handles.ts_time(1);
 handles.ts_time=handles.ts_time-window_length;
 set_axes_limits(handles);
 set(handles.start_t_textbox,'String',num2str(handles.ts_time(1)));
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function next_window(source,~)
+set(handles.textStatus,'string',sprintf('Processing...'));
 handles=guidata(get(source,'UserData'));
 window_length=handles.ts_time(2)-handles.ts_time(1);
 handles.ts_time=handles.ts_time+window_length;
 set_axes_limits(handles);
 set(handles.start_t_textbox,'String',num2str(handles.ts_time(1)));
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function apply_start_t(source,~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 start_t=str2double(get(source,'String'));
 window_length=handles.ts_time(2)-handles.ts_time(1);
 handles.ts_time(1)=start_t;
 handles.ts_time(2)=start_t+window_length;
 set_axes_limits(handles);
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function apply_window_length(source,~)
     handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
     window_length=str2double(get(source,'String'));
     handles.ts_time(2)=handles.ts_time(1)+window_length;
     set_axes_limits(handles);
     guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function set_axes_limits(handles)
 set(handles.axesTS,'xlim',[min(handles.ts_time) max(handles.ts_time)]);
@@ -485,6 +503,7 @@ set(handles.axesTS,'ylim',[-handles.WC.thr(1) handles.WC.thr(1)]*3);
 
 function plot_timecourse(source,~)
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 ifplot=get(handles.plot_timecourse,'Value');
 cla(handles.axesTS);
 if ifplot
@@ -519,6 +538,7 @@ if ifplot
 end
 handles=wc_plot_spikes_and_ISI(handles); %% needs to be her so spike indicator colors are always updated as well
 guidata(handles.mainfig, handles);
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 %% main figure (and additional cluster) functions
 
@@ -756,8 +776,8 @@ end
 guidata(handles.mainfig, handles); 
 
 function plot_all_spikes(source, event)
-% dummie so far
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 all=get(source,'Value');
 if all
 handles.const_MAX_SPIKES_TO_PLOT=handles.nspk;
@@ -766,6 +786,7 @@ handles.const_MAX_SPIKES_TO_PLOT=1000;
 end
 handles=wc_plot_spikes_and_ISI(handles);
 guidata(handles.mainfig, handles); 
+set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 
 function copy_to_new_window(source,~) %kinda useless too? --> maybe used for details??
