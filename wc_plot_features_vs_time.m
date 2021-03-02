@@ -19,10 +19,10 @@ zeroind = max(interv);
 
 total_N_spikes= numel([handles.classind{:}]);
 
-if ~isfield(handles,'blocksamplesperchannel') % to plot lines between blocks
-    load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel');
-    handles.blocksamplesperchannel = blocksamplesperchannel;
-end
+% if ~isfield(handles,'blocksamplesperchannel') % to plot lines between blocks
+%     load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel');
+%     handles.blocksamplesperchannel = blocksamplesperchannel;
+% end
 
 for k=interv
     %     max_spikes = min(MAX_SPIKES_TO_PLOT,length(handles.classind{k}));
