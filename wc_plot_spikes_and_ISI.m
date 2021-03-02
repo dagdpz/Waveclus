@@ -84,9 +84,9 @@ if toplot~=2,
     VER=version('-release');
     VER=str2double(VER(1:4));
     if VER>=2014
-        plot(ax,handles.sp_time, sp','color',[color 0.1]);
+        cp=plot(ax,handles.sp_time, sp','color',[color 0.1]);
     else
-        plot(ax,handles.sp_time, sp','color',color);
+        cp=plot(ax,handles.sp_time, sp','color',color);
     end
 end
 
@@ -103,6 +103,7 @@ w2=w2/sr*1e6;
 plot(ax,handles.sp_time, m,'color',avecolor,'linewidth',2);
 plot(ax,handles.sp_time, m+s,'color',avecolor,'linewidth',0.5);
 plot(ax,handles.sp_time, m-s,'color',avecolor,'linewidth',0.5);
+set(cp(1),'UserData',{0 i});
 if toplot~=2,
     title(ax,sprintf('#%d (%d), w=%1.0f (%1.0f) h=%1.0f',len,size(sp,1),w1,w2,amp));
 else
@@ -112,7 +113,7 @@ end
 lims = handles.lims;
 axis(ax,lims);
 set(ax,'XGrid','on');
-
+set(ax,'UserData',handles.mainfig);
 %% color spike indicators in BB plot
 if isfield(handles,'spike_indicators')
 set(handles.spike_indicators(handles.classind{i}),'color',color);
