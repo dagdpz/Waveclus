@@ -1,30 +1,19 @@
 function [features,f_names,sd] = wc_get_features(spikes,ts,handles)
 %Calculates the spike features
-scales = handles.WC.scales;
-feature = handles.WC.features;
-% exclusioncrit = handles.WC.exclusioncrit; % thr; number
-% exclusionthr = handles.WC.exclusionthr;
-% maxinputs = handles.WC.maxinputs;
-int_factor = handles.WC.int_factor;
-w_pre = handles.WC.w_pre;
-w_post = handles.WC.w_post;
-nspk=size(spikes,1);
-len = size(spikes,2)/int_factor;
+scales      = handles.WC.scales;
+feature     = handles.WC.features;
+int_factor  = handles.WC.int_factor;
+w_pre       = handles.WC.w_pre;
+w_post      = handles.WC.w_post;
+nspk        = size(spikes,1);
+len         = size(spikes,2)/int_factor;
 
-%% this part is more than dubious...!!!!
-%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-% w_pre=10;
-% int_factor=1;
-% shift = 2;
-% w_post = 22;
-% offstart = round(w_pre/2) + shift;
-% offend  = round(w_post/2) + shift + w_pre;
 ind1 = 1:(w_post+w_pre);
 
 % CALCULATES FEATURES
 features = [];
 f_names = {};
+norm_factor_WL=1;
 
 %% Wavelet decomposition
 if strfind(feature,'wav')
@@ -33,7 +22,6 @@ if strfind(feature,'wav')
         [c,l]=wavedec(spikes(i,ind1),scales,handles.WC.wavelet);
         cc(i,:)=c;
     end
-    %features
     fn=cell(1,len/2);
     j=1;
     k=scales+1;
@@ -56,8 +44,12 @@ end
 %% PCA
 if strfind(feature,'pca')
     numdim = 10;
-    [~,S] = princomp(spikes(:,ind1));
-    %features
+    matlabversion=datevec(version('-date'));
+    if matlabversion(1)>=2014
+        [~,S] = pca(spikes(:,ind1)); 
+    else
+        [~,S] = princomp(spikes(:,ind1)); 
+    end
     fn = cell(1,numdim);
     for i=1:numdim
         fn{i}=sprintf('PCA,%d',i);
@@ -70,12 +62,9 @@ if strfind(feature,'pca')
     clear fn S
 end
 
-
 %% Raw waveforms
-
 if strfind(feature,'raw')
     spikesdown = spikes(:,ind1);
-    %features
     fn = cell(1,length(ind1));
     for i=1:length(ind1)
         fn{i}=sprintf('Raw,%d',i);
@@ -116,21 +105,7 @@ for i=1:size(features,2)                            % lilliefors test for coeffi
     end
 end
 
-% %% to always keep pca 1,2,3 and time
-% if strfind(feature,'pca')
-%     ix=ismember(f_names,{'PCA,1','PCA,2','PCA,3'});    
-%     sd(ix)=max(sd)+sd(ix);
-% end
-% if strfind(feature,'time')
-%     sd(end)=max(sd)+1; 
-% end
-
-
-
 warning('on','stats:lillietest:OutOfRangeP');
 warning('on','stats:lillietest:OutOfRangePHigh');
 warning('on','stats:lillietest:OutOfRangePLow');
-% 
-% features = features(:,ind);
-% f_names = f_names(ind);
 end

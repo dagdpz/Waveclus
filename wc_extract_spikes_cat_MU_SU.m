@@ -101,10 +101,10 @@ else
         else
             [~, fff_idx]=min(m(fff),[],2);
         end
-        %% LS 20171010 this is the modification for removing positive spikes in case there was both
-        directionality=spikesign(fff);
-        neg_prefindex=any(directionality<0,2) & any(directionality>0,2);
-        [fff_idx(neg_prefindex),~]=find(directionality(neg_prefindex,:)'>0);
+%         %% LS 20171010 this is the modification for removing positive spikes in case there was both
+%         directionality=spikesign(fff);
+%         neg_prefindex=any(directionality<0,2) & any(directionality>0,2);
+%         [fff_idx(neg_prefindex),~]=find(directionality(neg_prefindex,:)'>0);
         
         fff=[fff(fff_idx==1,1);fff(fff_idx==2,2)];
         spikesign(fff)=[];
