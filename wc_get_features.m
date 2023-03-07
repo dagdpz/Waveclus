@@ -43,13 +43,13 @@ end
 
 %% PCA
 if strfind(feature,'pca')
-    numdim = 10;
     matlabversion=datevec(version('-date'));
     if matlabversion(1)>=2014
         [~,S] = pca(spikes(:,ind1)); 
     else
         [~,S] = princomp(spikes(:,ind1)); 
     end
+    numdim = min(10,size(S,2));
     fn = cell(1,numdim);
     for i=1:numdim
         fn{i}=sprintf('PCA,%d',i);
