@@ -20,21 +20,9 @@ handles.ts_time=[];
 cla(handles.axesTS);
 cla(handles.axesAllClusters);
 cla(handles.axesClust0);
-%cla(handles.axesISI0);
 set(handles.hclassify,'Value',0);
 set(handles.hclassify,'String','Classify');
-%-------
-% set(handles.htempmatch,'Value',0);
-% set(handles.htempmatch,'String','Class-T');
-% %-------
-% set(handles.htempmatch2,'Value',0);
-% set(handles.htempmatch2,'String','Near');
-% %-------
-% set(handles.htempmatch3,'Value',0);
-% set(handles.htempmatch3,'String','NearT');
 
-
-%-------
 cla(handles.axesTemp);
 if isfield(handles,'hhor'), handles=rmfield(handles,'hhor'); end
 if isfield(handles,'hver'), handles=rmfield(handles,'hver'); end
@@ -76,9 +64,3 @@ handles.sp_time=[];
 handles.mean_ss=[];
 handles.std_ss=[];
 handles.hcol=[];
-% 
-% if isfield(handles,'hfeatures'),
-%     figure(handles.hfeatures);
-%     clf reset; 
-%     set(handles.hfeatures,'Visible','Off');
-% end

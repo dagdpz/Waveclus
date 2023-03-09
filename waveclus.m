@@ -51,7 +51,9 @@ switch get(handles.htoread,'Value'),
     case 1, %ION
         t1=strfind(filename,'_ch');%minus is used to divide bname from channel
         t2=strfind(filename,'.mat');
+        underscore_positions=strfind(filename,'_');
         handles.bname = filename(1:t1-1);
+        handles.current_channel_file = str2num(filename(underscore_positions(end)+1:t2-1));
         handles.thrsign = filename(t1+7:t2-1);
         handles.channel=str2double(filename(t1+3:t1+5));
         handles.filename=(filename(1:t2(1)-1));
@@ -191,12 +193,6 @@ set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.dat
 function accept_classification(handles)
 set(handles.hclassify,'String','Classify');
 set(handles.hclassify,'Value',0);
-% set(handles.htempmatch,'String','Class-T');
-% set(handles.htempmatch,'Value',0);
-% set(handles.htempmatch2,'String','Near');
-% set(handles.htempmatch2,'Value',0);
-% set(handles.htempmatch3,'String','NearT');
-% set(handles.htempmatch3,'Value',0);
 guidata(handles.mainfig, handles);
 
 function method=get_classify_version_from_tag(source)
@@ -453,6 +449,13 @@ handles.classind_unforced{end-1}=[];
 handles.classind{end+1}=[]; 
 handles=wc_plot_spikes_and_ISI(handles);
 handles.WC.clus_per_temp=[handles.WC.clus_per_temp [2;2]];
+
+
+    x=handles.WC.clus_per_temp(1,end)-1;
+    cc=handles.WC.clus_per_temp(2,end);
+    y=handles.tree(x+1,cc+4);
+
+handles.hcol(numel(handles.hcol)+1)=scatter(x,y,50,handles.colors(mod(handles.ncl-1,size(handles.colors,1))+1,:),'o','filled');
 guidata(handles.mainfig, handles);
 
 %% broadband functions
@@ -611,21 +614,6 @@ handles.hclassify=uicontrol('units','normalized','Style','togglebutton','String'
     'UserData',handles.mainfig,...
     'Position',[stepx-0.01  1-(stepy+hight)*( nrow )-stepy*0.9 0.1 0.035],...
     'Callback',{@classifybutton_Callback});
-% handles.htempmatch=uicontrol('units','normalized','Style','togglebutton','String','Class-T','FontSize',12,...
-%     'Tag','Class-T',...
-%     'UserData',handles.mainfig,...
-%     'Position',[stepx+0.03 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
-%     'Callback',{@classifybutton_Callback});
-% handles.htempmatch2=uicontrol('units','normalized','Style','togglebutton','String','Near','FontSize',12,...
-%     'Tag','Near',...
-%     'UserData',handles.mainfig,...
-%     'Position',[stepx+0.06 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
-%     'Callback',{@classifybutton_Callback});
-% handles.htempmatch3=uicontrol('units','normalized','Style','togglebutton','String','Near T','FontSize',12,...
-%     'Tag','NearT',...
-%     'UserData',handles.mainfig,...
-%     'Position',[stepx+0.09 1-(stepy+hight)*( nrow )-stepy*0.9 0.03 0.035],...
-%     'Callback',{@classifybutton_Callback});
 handles.hfuseclusters=uicontrol('units','normalized','Style','togglebutton','String','Fuse','FontSize',12,...
     'Tag','fuse',...
     'UserData',handles.mainfig,...

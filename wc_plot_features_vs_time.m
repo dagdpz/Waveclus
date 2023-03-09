@@ -19,9 +19,15 @@ zeroind = max(interv);
 
 total_N_spikes= numel([handles.classind{:}]);
 if ~isfield(handles,'blocksamplesperchannel') % During WC creation, this field is carried out in handles, but not when loading from WC and plot
-    load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel');
-    handles.blocksamplesperchannel = blocksamplesperchannel;
+    load([handles.pathname 'concatenation_info.mat'],'blocksamplesperchannel','wheretofindwhat','whattofindwhere','channels_to_process','sr');
+else
+    blocksamplesperchannel=handles.blocksamplesperchannel;
+    whattofindwhere=handles.whattofindwhere;
+    sr=handles.sr_per_block{handles.current_blocks(1)};
 end
+    blocktimes=blocksamplesperchannel{1,handles.channel}/sr*1000;
+    startingblock=whattofindwhere{handles.channel}{handles.current_channel_file}(1);
+    endblock=whattofindwhere{handles.channel}{handles.current_channel_file}(end);
 
 for k=interv
     max_spikes=max([1 round(length(handles.classind{k})/total_N_spikes*MAX_SPIKES_TO_PLOT)]);
@@ -86,14 +92,11 @@ for i=2:nf
     clear hLine
     
     %draw horizontal lines between blocks
-    if size(handles.blocksamplesperchannel{1,handles.channel},1) > 1
-        for n_blocks = 2:size(handles.blocksamplesperchannel{1,handles.channel},1)
-            block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
-            block_y_vector = repmat((handles.blocksamplesperchannel{1,handles.channel}(n_blocks,1)/handles.WC.sr)*1000, 1, length(block_x_vector));
-            hLine2 = plot(cax, block_x_vector, block_y_vector,'k');
-            hLine2.LineWidth = 0.1;
-        end
-        clear hLine2
+    for n_blocks = startingblock:endblock-1
+        block_x_vector = linspace(min(get(cax,'Xlim')),max(get(cax,'Xlim')),100);
+        block_y_vector = repmat(blocktimes(n_blocks,2), 1, length(block_x_vector));
+        hLine2 = plot(cax, block_x_vector, block_y_vector,'k');
     end
+    clear hLine2
     clear hLine
 end

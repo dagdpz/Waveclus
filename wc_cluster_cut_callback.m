@@ -83,13 +83,7 @@ try
         delete(source);
         return;
     end
-    %     % get rid of empty clusters, why were those allowed to exist in the
-    %     % first place?
-    %     validclusters = logical(cellfun(@numel,handles.classind));
-    %     validclusters(end) = 1;
-    %     handles.classind = handles.classind(validclusters);
-    
-    % next, get all clusters that have a point inside of the polygon
+    %   get all clusters that have a point inside of the polygon
     if h.featureIndex{1} == 0 % cut spikes from spike plot
         ydata = handles.spikes(handles.classind{h.featureIndex{2}},:);
         xdata = repmat(1:size(ydata,2),size(ydata,1),1);
