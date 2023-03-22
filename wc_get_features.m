@@ -89,8 +89,8 @@ warning('off','stats:lillietest:OutOfRangeP');
 warning('off','stats:lillietest:OutOfRangePHigh');
 warning('off','stats:lillietest:OutOfRangePLow');
 
-stdcc = std(features) * 3;
-meancc = mean(features);
+stdcc = nanstd(features, [], 1) * 3; % calculate std exclusively by row
+meancc = nanmean(features, 1); % calculate mean exclusively by row
 thr_dist_min = meancc - stdcc;
 thr_dist_max = meancc + stdcc;
 
