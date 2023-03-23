@@ -52,7 +52,7 @@ end
         ups=ups(is_during_task);
     end
 if isempty(ups), %no spikes detected
-    spikes=[]; index=[];
+    spikes=[]; index=[]; spikesign=[];
     %    save(spikes_fname,'spikes','index');
 else
     %find beginnings and endings of intervals with values above threshold
