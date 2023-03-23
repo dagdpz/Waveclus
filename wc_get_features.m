@@ -44,8 +44,9 @@ end
 %% PCA
 if strfind(feature,'pca')
     matlabversion=datevec(version('-date'));
-    if matlabversion(1)>=2014
-        [~,S] = pca(spikes(:,ind1),'Economy',false); 
+    if matlabversion(1)>2014
+        [~,S] = pca(spikes(:,ind1)); 
+        %[~,S] = pca(spikes(:,ind1),'Economy',false); 
     else
         [~,S] = princomp(spikes(:,ind1)); 
     end
