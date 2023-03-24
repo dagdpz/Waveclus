@@ -9,7 +9,7 @@ handles.classify_space='features';
 handles.classify_method= 'linear';
 
 handles.datafolder=['Y:' filesep 'Data' filesep 'Sortcodes' filesep];
-clus_colors = [0 0 1; 1 0 0; 0 1 0; 0 1 1; 1 0 1; 1 1 0; 0 0.75 0.75; 0.75 0 0.75; 0.75 0.75 0; 0.6 0 0; 0 0.6 0; 0 0 0.6; 0 0 0.6;0 0 0];
+clus_colors = [1 0 0; 1 0.53 0; 1 0.85 0; 0.55 0.9 0.1; 0.05 0.65 0.3; 0.05 0.65 0.7; 0.15 0.5 1; 0.1 0.25 0.7; 0.55 0.2 0.75; 0.85 0.15 0.85; 1 0 0.6; 0.6 0.6 0.6; 0.3 0.3 0.3];
 set(0,'DefaultAxesColorOrder',clus_colors);
 handles.colors= clus_colors;
 
