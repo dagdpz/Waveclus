@@ -43,6 +43,7 @@ end
 
 %% PCA
 if strfind(feature,'pca')
+    numdim = 10;
     matlabversion=datevec(version('-date'));
     if matlabversion(1)>2014
         [~,S] = pca(spikes(:,ind1)); 
@@ -50,7 +51,6 @@ if strfind(feature,'pca')
     else
         [~,S] = princomp(spikes(:,ind1)); 
     end
-    numdim = min(10,size(S,2));
     fn = cell(1,numdim);
     for i=1:numdim
         fn{i}=sprintf('PCA,%d',i);
@@ -90,8 +90,8 @@ warning('off','stats:lillietest:OutOfRangeP');
 warning('off','stats:lillietest:OutOfRangePHigh');
 warning('off','stats:lillietest:OutOfRangePLow');
 
-stdcc = std(features) * 3;
-meancc = mean(features);
+stdcc = std(features, [], 1) * 3; % calculate std exclusively by row
+meancc = mean(features, 1); % calculate mean exclusively by row
 thr_dist_min = meancc - stdcc;
 thr_dist_max = meancc + stdcc;
 
