@@ -47,7 +47,7 @@ end
     if remove_ini
         is_during_task=false(size(ups));
         for t=1:size(handles.task_times,1)
-            is_during_task(ups>=handles.task_times(t,1)*handles.WC.sr & ups<=handles.task_times(t,2)*handles.WC.sr)=true;
+            is_during_task(ups>handles.task_times(t,1)*handles.WC.sr & ups<handles.task_times(t,2)*handles.WC.sr)=true; %% changed from <= and >= to </>
         end
         ups=ups(is_during_task);
     end
