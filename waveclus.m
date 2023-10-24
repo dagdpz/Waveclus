@@ -471,8 +471,8 @@ guidata(handles.mainfig, handles);
 set(handles.textStatus,'string',sprintf('%s',[handles.pathname(numel(handles.datafolder)+1:end) handles.filename]));
 
 function next_window(source,~)
-set(handles.textStatus,'string',sprintf('Processing...'));
 handles=guidata(get(source,'UserData'));
+set(handles.textStatus,'string',sprintf('Processing...'));
 window_length=handles.ts_time(2)-handles.ts_time(1);
 handles.ts_time=handles.ts_time+window_length;
 set_axes_limits(handles);
